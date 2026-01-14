@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug HR Pro</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>HR Pro Debug Page</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+        const debugOutput = document.getElementById('debug-output');
+        
+        function log(message, type = 'debug') {
+            const div = document.createElement('div');
+            div.className = `debug ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            debugOutput.appendChild(div);
+            console.log(message);
+        }
+        
+        // Test basic functionality
+        log('Debug page loaded');
+        
+        // Test API connectivity
+        async function testAPI() {
+            try {
+                log('Testing API connectivity...');
+                
+                // Test login
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@hrpro.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('Login API test successful', 'success');
+                    log(`Token received: ${data.token.substring(0, 20)}...`, 'success');
+                    
+                    // Test dashboard stats
+                    const statsResponse = await fetch('/api/dashboard/stats', {
+                        headers: {
+                            'Authorization': `Bearer ${data.token}`
+                        }
+                    });
+                    
+                    if (statsResponse.ok) {
+                        const stats = await statsResponse.json();
+                        log('Dashboard stats API test successful', 'success');
+                        log(`Total employees: ${stats.employees.total}`, 'success');
+                    } else {
+                        log('Dashboard stats API test failed', 'error');
+                    }
+                } else {
+                    log('Login API test failed', 'error');
+                }
+            } catch (error) {
+                log(`API test error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test DOM elements from main page
+        function testMainPageElements() {
+            log('Testing if we can access main page elements...');
+            
+            // Try to load the main page content via fetch
+            fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    log('Main page HTML loaded successfully', 'success');
+                    
+                    // Check if key elements exist in the HTML
+                    const hasLoadingScreen = html.includes('id="loading-screen"');
+                    const hasLoginScreen = html.includes('id="login-screen"');
+                    const hasApp = html.includes('id="app"');
+                    const hasInitScript = html.includes('init.js');
+                    
+                    log(`Loading screen element: ${hasLoadingScreen ? 'Found' : 'Missing'}`, hasLoadingScreen ? 'success' : 'error');
+                    log(`Login screen element: ${hasLoginScreen ? 'Found' : 'Missing'}`, hasLoginScreen ? 'success' : 'error');
+                    log(`App element: ${hasApp ? 'Found' : 'Missing'}`, hasApp ? 'success' : 'error');
+                    log(`Init script: ${hasInitScript ? 'Found' : 'Missing'}`, hasInitScript ? 'success' : 'error');
+                })
+                .catch(error => {
+                    log(`Failed to load main page: ${error.message}`, 'error');
+                });
+        }
+        
+        // Run tests
+        testAPI();
+        testMainPageElements();
+        
+        // Test init.js loading
+        const script = document.createElement('script');
+        script.src = '/init.js';
+        script.onload = () => log('init.js loaded successfully', 'success');
+        script.onerror = () => log('Failed to load init.js', 'error');
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

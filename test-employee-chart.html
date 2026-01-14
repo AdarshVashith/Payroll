@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Growth Chart Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .chart-container { width: 800px; height: 400px; margin: 20px 0; }
+        .info { background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</head>
+<body>
+    <h1>Employee Growth Chart Test</h1>
+    <div id="info" class="info">Loading...</div>
+    
+    <div class="chart-container">
+        <canvas id="employee-growth-chart"></canvas>
+    </div>
+    
+    <script>
+        async function testEmployeeChart() {
+            const info = document.getElementById('info');
+            
+            try {
+                // Login first
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@hrpro.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginResponse.ok) {
+                    info.innerHTML = '✓ Login successful<br>';
+                    
+                    // Get employee growth data
+                    const chartResponse = await fetch('/api/dashboard/charts/employee-growth', {
+                        headers: { 'Authorization': `Bearer ${loginData.token}` }
+                    });
+                    
+                    const chartData = await chartResponse.json();
+                    
+                    if (chartResponse.ok) {
+                        info.innerHTML += '✓ Employee growth data loaded<br>';
+                        info.innerHTML += `Data points: ${chartData.length}<br>`;
+                        info.innerHTML += `Current total employees: ${chartData[chartData.length - 1]?.cumulative || 0}<br>`;
+                        
+                        // Create chart
+                        createEmployeeGrowthChart(chartData);
+                        info.innerHTML += '✓ Chart created successfully';
+                    } else {
+                        info.innerHTML += '✗ Failed to load chart data';
+                    }
+                } else {
+                    info.innerHTML = '✗ Login failed';
+                }
+            } catch (error) {
+                info.innerHTML = `✗ Error: ${error.message}`;
+            }
+        }
+        
+        function createEmployeeGrowthChart(data) {
+            const canvas = document.getElementById('employee-growth-chart');
+            const ctx = canvas.getContext('2d');
+            
+            const labels = data.map(item => item.period);
+            const newEmployees = data.map(item => item.count);
+            const totalEmployees = data.map(item => item.cumulative);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Employees',
+                            data: totalEmployees,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        },
+                        {
+                            label: 'New Hires',
+                            data: newEmployees,
+                            borderColor: '#43e97b',
+                            backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#43e97b',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Employee Growth Over Time'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Period'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Number of Employees'
+                            },
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        testEmployeeChart();
+    </script>
+</body>
+</html>

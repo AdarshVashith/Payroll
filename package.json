@@ -1,0 +1,32 @@
+{
+  "name": "hr-payroll-system",
+  "version": "1.0.0",
+  "description": "Full-stack HR and Payroll Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node scripts/seedData.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "moment": "^2.29.4",
+    "nodemailer": "^6.9.7",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "pdfkit": "^0.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["hr", "payroll", "employee", "management", "fullstack"],
+  "author": "HR Pro Team",
+  "license": "MIT"
+}

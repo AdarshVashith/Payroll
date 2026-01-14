@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Pro - Human Resource Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner">
+            <i class="fas fa-users"></i>
+            <p>Loading HR Pro...</p>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <i class="fas fa-users"></i>
+                <h1>HR Pro</h1>
+                <p>Human Resource Management System</p>
+            </div>
+            
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+                
+                <div class="login-links">
+                    <a href="#" id="register-link">Create Account</a>
+                </div>
+            </form>
+
+            <!-- Registration Form -->
+            <form id="register-form" class="login-form" style="display: none;">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-role">Role</label>
+                    <select id="reg-role" name="role">
+                        <option value="employee">Employee</option>
+                        <option value="hr">HR</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Register
+                </button>
+                
+                <div class="login-links">
+                    <a href="#" id="login-link">Back to Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app" style="display: none;">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-users"></i>
+                <span>HR Pro</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#dashboard" class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a></li>
+                
+                <li><a href="#employees" class="menu-item" data-page="employees">
+                    <i class="fas fa-users"></i>
+                    <span>Employees</span>
+                </a></li>
+                
+                <li><a href="#attendance" class="menu-item" data-page="attendance">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Attendance</span>
+                </a></li>
+                
+                <li><a href="#leaves" class="menu-item" data-page="leaves">
+                    <i class="fas fa-calendar-times"></i>
+                    <span>Leave Management</span>
+                </a></li>
+                
+                <li><a href="#payroll" class="menu-item" data-page="payroll">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payroll</span>
+                </a></li>
+                
+                <li><a href="#expenses" class="menu-item" data-page="expenses">
+                    <i class="fas fa-receipt"></i>
+                    <span>Expenses</span>
+                </a></li>
+                
+                <li><a href="#performance" class="menu-item" data-page="performance">
+                    <i class="fas fa-trophy"></i>
+                    <span>Performance</span>
+                </a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="sidebar-user-name">User</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                
+                <div class="header-right">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user-profile-dropdown">
+                        <div class="user-avatar" id="user-profile-trigger">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="user-name">User</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu">
+                            <div class="user-dropdown-header">
+                                <div class="user-avatar-large">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name" id="dropdown-user-name">User</div>
+                                    <div class="user-email" id="dropdown-user-email">user@example.com</div>
+                                    <div class="user-role" id="dropdown-user-role">Employee</div>
+                                </div>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <div class="user-dropdown-body">
+                                <a href="#" class="dropdown-item" id="profile-settings">
+                                    <i class="fas fa-user-cog"></i>
+                                    <span>Profile Settings</span>
+                                </a>
+                                <a href="#" class="dropdown-item" id="change-password">
+                                    <i class="fas fa-key"></i>
+                                    <span>Change Password</span>
+                                </a>
+                                <a href="#" class="dropdown-item" id="preferences">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Preferences</span>
+                                </a>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <div class="user-dropdown-footer">
+                                <button class="dropdown-item logout-item" id="logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-employees">0</h3>
+                                <p>Total Employees</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="present-today">0</h3>
+                                <p>Present Today</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="pending-leaves">0</h3>
+                                <p>Pending Leaves</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="monthly-payroll">$0</h3>
+                                <p>Monthly Payroll</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Employee Growth</h3>
+                            </div>
+                            <div class="card-content">
+                                <canvas id="employee-growth-chart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Department Distribution</h3>
+                            </div>
+                            <div class="card-content">
+                                <canvas id="department-chart" width="300" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Recent Activities</h3>
+                            </div>
+                            <div class="card-content">
+                                <div id="recent-activities" class="activity-list">
+                                    <p class="text-muted">Loading activities...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employees Page -->
+                <div id="employees-page" class="page">
+                    <div class="page-header">
+                        <div class="page-header-content">
+                            <h2>Employee Management</h2>
+                            <p>Manage employee information, salary structures, and documents</p>
+                        </div>
+                        <div class="page-actions">
+                            <button id="add-employee-btn" class="btn-primary">
+                                <i class="fas fa-plus"></i> Add Employee
+                            </button>
+                            <button id="bulk-import-btn" class="btn-secondary">
+                                <i class="fas fa-upload"></i> Bulk Import
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Employee Filters -->
+                    <div class="filters-section">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="employee-search">Search</label>
+                                <input type="text" id="employee-search" placeholder="Search by name, ID, or email">
+                            </div>
+                            <div class="filter-group">
+                                <label for="department-filter">Department</label>
+                                <select id="department-filter">
+                                    <option value="">All Departments</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Sales">Sales</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="status-filter">Status</label>
+                                <select id="status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="on-notice">On Notice</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="exited">Exited</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="employment-type-filter">Employment Type</label>
+                                <select id="employment-type-filter">
+                                    <option value="">All Types</option>
+                                    <option value="full-time">Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="intern">Intern</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Employee Table -->
+                    <div class="table-container">
+                        <table id="employees-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Designation</th>
+                                    <th>Employment Type</th>
+                                    <th>Joining Date</th>
+                                    <th>Status</th>
+                                    <th>Monthly Salary</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Employee data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="employee-count">Showing 0 employees</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="prev-page" class="btn-secondary">Previous</button>
+                            <span id="page-info">Page 1 of 1</span>
+                            <button id="next-page" class="btn-secondary">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Page -->
+                <div id="attendance-page" class="page">
+                    <div class="page-header">
+                        <div class="page-header-content">
+                            <h2>Attendance Management</h2>
+                            <p>Track daily attendance, manage entries, and calculate pay</p>
+                        </div>
+                        <div class="page-actions">
+                            <button id="manual-attendance-btn" class="btn-primary">
+                                <i class="fas fa-plus"></i> Manual Entry
+                            </button>
+                            <button id="bulk-attendance-btn" class="btn-secondary">
+                                <i class="fas fa-upload"></i> Bulk Entry
+                            </button>
+                            <button id="daily-report-btn" class="btn-secondary">
+                                <i class="fas fa-chart-line"></i> Daily Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance Summary Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-present">0</h3>
+                                <p>Present Today</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-absent">0</h3>
+                                <p>Absent Today</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-wfh">0</h3>
+                                <p>Work from Home</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-late">0</h3>
+                                <p>Late Arrivals</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Filters -->
+                    <div class="filters-section">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="attendance-date">Date</label>
+                                <input type="date" id="attendance-date" value="">
+                            </div>
+                            <div class="filter-group">
+                                <label for="attendance-employee">Employee</label>
+                                <select id="attendance-employee">
+                                    <option value="">All Employees</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="attendance-status">Status</label>
+                                <select id="attendance-status">
+                                    <option value="">All Status</option>
+                                    <option value="present">Present</option>
+                                    <option value="absent">Absent</option>
+                                    <option value="half-day">Half Day</option>
+                                    <option value="work-from-home">Work from Home</option>
+                                    <option value="on-leave">On Leave</option>
+                                    <option value="holiday">Holiday</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="attendance-department">Department</label>
+                                <select id="attendance-department">
+                                    <option value="">All Departments</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Sales">Sales</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance Table -->
+                    <div class="table-container">
+                        <table id="attendance-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Working Hours</th>
+                                    <th>Overtime</th>
+                                    <th>Late</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Attendance data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="attendance-count">Showing 0 records</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="attendance-prev-page" class="btn-secondary">Previous</button>
+                            <span id="attendance-page-info">Page 1 of 1</span>
+                            <button id="attendance-next-page" class="btn-secondary">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other pages will be similar structures -->
+                <!-- Leave Management Page -->
+                <div id="leaves-page" class="page">
+                    <div class="page-header">
+                        <div class="page-header-content">
+                            <h2>Leave Management</h2>
+                            <p>Manage leave requests, track balances, and approve applications</p>
+                        </div>
+                        <div class="page-actions">
+                            <button id="apply-leave-btn" class="btn-primary">
+                                <i class="fas fa-plus"></i> Apply Leave
+                            </button>
+                            <button id="leave-balance-btn" class="btn-secondary">
+                                <i class="fas fa-chart-pie"></i> Leave Balance
+                            </button>
+                            <button id="leave-calendar-btn" class="btn-secondary">
+                                <i class="fas fa-calendar"></i> Leave Calendar
+                            </button>
+                            <button id="pending-approvals-btn" class="btn-secondary">
+                                <i class="fas fa-clock"></i> Pending Approvals
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Summary Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-leaves">0</h3>
+                                <p>Total Applications</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="approved-leaves">0</h3>
+                                <p>Approved</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="pending-leaves">0</h3>
+                                <p>Pending Approval</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="rejected-leaves">0</h3>
+                                <p>Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leave Filters -->
+                    <div class="filters-section">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="leave-employee">Employee</label>
+                                <select id="leave-employee">
+                                    <option value="">All Employees</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="leave-type-filter">Leave Type</label>
+                                <select id="leave-type-filter">
+                                    <option value="">All Types</option>
+                                    <option value="casual-leave">Casual Leave</option>
+                                    <option value="sick-leave">Sick Leave</option>
+                                    <option value="earned-leave">Earned Leave</option>
+                                    <option value="unpaid-leave">Unpaid Leave</option>
+                                    <option value="maternity-leave">Maternity Leave</option>
+                                    <option value="paternity-leave">Paternity Leave</option>
+                                    <option value="bereavement-leave">Bereavement Leave</option>
+                                    <option value="marriage-leave">Marriage Leave</option>
+                                    <option value="emergency-leave">Emergency Leave</option>
+                                    <option value="compensatory-off">Compensatory Off</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="leave-status-filter">Status</label>
+                                <select id="leave-status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="submitted">Submitted</option>
+                                    <option value="under-review">Under Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="leave-year">Year</label>
+                                <select id="leave-year">
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Table -->
+                    <div class="table-container">
+                        <table id="leaves-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Leave ID</th>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Applied Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Leave data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="leave-count">Showing 0 records</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="leave-prev-page" class="btn-secondary">Previous</button>
+                            <span id="leave-page-info">Page 1 of 1</span>
+                            <button id="leave-next-page" class="btn-secondary">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payroll-page" class="page">
+                    <div class="page-header">
+                        <h2>Payroll Management</h2>
+                        <div class="header-actions">
+                            <button class="btn-primary" id="bulk-process-payroll-btn">
+                                <i class="fas fa-cogs"></i>
+                                Bulk Process Payroll
+                            </button>
+                            <button class="btn-secondary" id="compliance-reports-btn">
+                                <i class="fas fa-file-alt"></i>
+                                Compliance Reports
+                            </button>
+                            <button class="btn-secondary" id="tax-management-btn">
+                                <i class="fas fa-calculator"></i>
+                                Tax Management
+                            </button>
+                            <button class="btn-secondary" id="salary-disbursement-btn">
+                                <i class="fas fa-credit-card"></i>
+                                Salary Disbursement
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Summary Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-payrolls">0</h3>
+                                <p>Total Payrolls</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="processed-payrolls">0</h3>
+                                <p>Processed</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="pending-payrolls">0</h3>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-payroll-amount">₹0</h3>
+                                <p>Total Amount</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Filters -->
+                    <div class="filters-section">
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label for="payroll-employee">Employee:</label>
+                                <select id="payroll-employee">
+                                    <option value="">All Employees</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="payroll-department">Department:</label>
+                                <select id="payroll-department">
+                                    <option value="">All Departments</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Finance">Finance</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="payroll-status-filter">Status:</label>
+                                <select id="payroll-status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="calculated">Calculated</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="processed">Processed</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="payroll-month">Month:</label>
+                                <select id="payroll-month">
+                                    <option value="">All Months</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="payroll-year">Year:</label>
+                                <select id="payroll-year">
+                                    <option value="2026">2026</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filters-info">
+                            <span id="payroll-count">Showing 0 records</span>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Table -->
+                    <div class="table-container">
+                        <table id="payroll-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Payroll ID</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Pay Period</th>
+                                    <th>Working Days</th>
+                                    <th>Gross Pay</th>
+                                    <th>Deductions</th>
+                                    <th>Net Pay</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="expenses-page" class="page">
+                    <div class="page-header">
+                        <h2>Expense Management</h2>
+                        <button class="btn-primary" id="submit-expense-btn">
+                            <i class="fas fa-plus"></i>
+                            Submit Expense
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="expenses-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="performance-page" class="page">
+                    <div class="page-header">
+                        <h2>Performance Management</h2>
+                        <button class="btn-primary" id="create-review-btn">
+                            <i class="fas fa-plus"></i>
+                            Create Review
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="performance-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Review Type</th>
+                                    <th>Period</th>
+                                    <th>Status</th>
+                                    <th>Rating</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-container">
+        <!-- Employee Add/Edit Modal -->
+        <div id="employee-modal" class="modal">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3 id="employee-modal-title">Add New Employee</h3>
+                    <button class="modal-close" onclick="closeEmployeeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="employee-form" class="modal-form">
+                    <div class="form-tabs">
+                        <button type="button" class="tab-btn active" data-tab="personal">Personal Info</button>
+                        <button type="button" class="tab-btn" data-tab="employment">Employment</button>
+                        <button type="button" class="tab-btn" data-tab="salary">Salary Structure</button>
+                        <button type="button" class="tab-btn" data-tab="bank">Bank Details</button>
+                        <button type="button" class="tab-btn" data-tab="documents">Documents</button>
+                    </div>
+
+                    <!-- Personal Information Tab -->
+                    <div id="personal-tab" class="tab-content active">
+                        <h4>Personal Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="employeeId">Employee ID *</label>
+                                <input type="text" id="employeeId" name="employeeId" required placeholder="e.g., EMP001">
+                                <small>Leave empty to auto-generate</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="firstName">First Name *</label>
+                                <input type="text" id="firstName" name="personalInfo.firstName" required placeholder="e.g., Rajesh">
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name *</label>
+                                <input type="text" id="lastName" name="personalInfo.lastName" required placeholder="e.g., Kumar">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="personalInfo.email" required placeholder="e.g., rajesh.kumar@company.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="personalInfo.phone" required placeholder="e.g., +91-9876543210">
+                            </div>
+                            <div class="form-group">
+                                <label for="dateOfBirth">Date of Birth</label>
+                                <input type="date" id="dateOfBirth" name="personalInfo.dateOfBirth">
+                            </div>
+                            <div class="form-group">
+                                <label for="gender">Gender</label>
+                                <select id="gender" name="personalInfo.gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="maritalStatus">Marital Status</label>
+                                <select id="maritalStatus" name="personalInfo.maritalStatus">
+                                    <option value="">Select Status</option>
+                                    <option value="single">Single</option>
+                                    <option value="married">Married</option>
+                                    <option value="divorced">Divorced</option>
+                                    <option value="widowed">Widowed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h5>Address</h5>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="street">Street Address</label>
+                                <input type="text" id="street" name="personalInfo.address.street">
+                            </div>
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" name="personalInfo.address.city">
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <input type="text" id="state" name="personalInfo.address.state">
+                            </div>
+                            <div class="form-group">
+                                <label for="zipCode">ZIP Code</label>
+                                <input type="text" id="zipCode" name="personalInfo.address.zipCode">
+                            </div>
+                        </div>
+
+                        <h5>Indian Documents</h5>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="panNumber">PAN Number</label>
+                                <input type="text" id="panNumber" name="personalInfo.panNumber" placeholder="ABCDE1234F">
+                            </div>
+                            <div class="form-group">
+                                <label for="aadhaarNumber">Aadhaar Number</label>
+                                <input type="text" id="aadhaarNumber" name="personalInfo.aadhaarNumber" placeholder="1234 5678 9012">
+                            </div>
+                            <div class="form-group">
+                                <label for="passportNumber">Passport Number</label>
+                                <input type="text" id="passportNumber" name="personalInfo.passportNumber">
+                            </div>
+                        </div>
+
+                        <h5>Emergency Contact</h5>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="emergencyName">Contact Name</label>
+                                <input type="text" id="emergencyName" name="personalInfo.emergencyContact.name">
+                            </div>
+                            <div class="form-group">
+                                <label for="emergencyRelationship">Relationship</label>
+                                <input type="text" id="emergencyRelationship" name="personalInfo.emergencyContact.relationship">
+                            </div>
+                            <div class="form-group">
+                                <label for="emergencyPhone">Phone Number</label>
+                                <input type="tel" id="emergencyPhone" name="personalInfo.emergencyContact.phone">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Tab -->
+                    <div id="employment-tab" class="tab-content">
+                        <h4>Employment Details</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="department">Department *</label>
+                                <select id="department" name="employment.department" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="HR">Human Resources</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="IT">Information Technology</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="designation">Designation *</label>
+                                <input type="text" id="designation" name="employment.designation" required placeholder="e.g., Senior Software Engineer">
+                            </div>
+                            <div class="form-group">
+                                <label for="role">Role *</label>
+                                <input type="text" id="role" name="employment.role" required placeholder="e.g., Full Stack Developer">
+                            </div>
+                            <div class="form-group">
+                                <label for="employmentType">Employment Type *</label>
+                                <select id="employmentType" name="employment.employmentType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="full-time">Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="intern">Intern</option>
+                                    <option value="consultant">Consultant</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="dateOfJoining">Date of Joining *</label>
+                                <input type="date" id="dateOfJoining" name="employment.dateOfJoining" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="employmentStatus">Employee Status *</label>
+                                <select id="employmentStatus" name="employment.status" required>
+                                    <option value="active">Active</option>
+                                    <option value="on-notice">On Notice</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="exited">Exited</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="workLocation">Work Location</label>
+                                <input type="text" id="workLocation" name="employment.workLocation" placeholder="e.g., Bangalore Office">
+                            </div>
+                            <div class="form-group">
+                                <label for="probationPeriod">Probation Period (months)</label>
+                                <input type="number" id="probationPeriod" name="employment.probationPeriod" value="6" min="0" max="12">
+                            </div>
+                            <div class="form-group">
+                                <label for="noticePeriod">Notice Period (days)</label>
+                                <input type="number" id="noticePeriod" name="employment.noticePeriod" value="30" min="0" max="90">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Salary Structure Tab -->
+                    <div id="salary-tab" class="tab-content">
+                        <h4>Salary Structure</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="ctc">Annual CTC (₹) *</label>
+                                <input type="number" id="ctc" name="salaryStructure.ctc" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="basicSalary">Basic Salary (Annual) *</label>
+                                <input type="number" id="basicSalary" name="salaryStructure.basicSalary" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="hra">HRA (Annual)</label>
+                                <input type="number" id="hra" name="salaryStructure.hra">
+                                <small>Leave empty for auto-calculation (40% of basic)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="specialAllowance">Special Allowance (Annual)</label>
+                                <input type="number" id="specialAllowance" name="salaryStructure.specialAllowance">
+                            </div>
+                            <div class="form-group">
+                                <label for="transportAllowance">Transport Allowance (Monthly)</label>
+                                <input type="number" id="transportAllowance" name="salaryStructure.transportAllowance" value="1600">
+                            </div>
+                            <div class="form-group">
+                                <label for="medicalAllowance">Medical Allowance (Monthly)</label>
+                                <input type="number" id="medicalAllowance" name="salaryStructure.medicalAllowance" value="1250">
+                            </div>
+                        </div>
+
+                        <h5>Statutory Information</h5>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pfNumber">PF Number</label>
+                                <input type="text" id="pfNumber" name="taxInfo.pfNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="esiNumber">ESI Number</label>
+                                <input type="text" id="esiNumber" name="taxInfo.esiNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="uanNumber">UAN Number</label>
+                                <input type="text" id="uanNumber" name="taxInfo.uanNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="taxRegime">Tax Regime</label>
+                                <select id="taxRegime" name="taxInfo.taxRegime">
+                                    <option value="new">New Tax Regime</option>
+                                    <option value="old">Old Tax Regime</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank Details Tab -->
+                    <div id="bank-tab" class="tab-content">
+                        <h4>Bank Account Details</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="accountNumber">Account Number *</label>
+                                <input type="text" id="accountNumber" name="bankDetails.accountNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ifscCode">IFSC Code *</label>
+                                <input type="text" id="ifscCode" name="bankDetails.ifscCode" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bankName">Bank Name *</label>
+                                <input type="text" id="bankName" name="bankDetails.bankName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="branchName">Branch Name</label>
+                                <input type="text" id="branchName" name="bankDetails.branchName">
+                            </div>
+                            <div class="form-group">
+                                <label for="accountType">Account Type</label>
+                                <select id="accountType" name="bankDetails.accountType">
+                                    <option value="savings">Savings</option>
+                                    <option value="current">Current</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="accountHolderName">Account Holder Name *</label>
+                                <input type="text" id="accountHolderName" name="bankDetails.accountHolderName" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents Tab -->
+                    <div id="documents-tab" class="tab-content">
+                        <h4>Document Upload</h4>
+                        <div class="document-upload-section">
+                            <div class="upload-area">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag and drop files here or click to browse</p>
+                                <input type="file" id="document-upload" multiple accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                            <div id="document-list" class="document-list">
+                                <!-- Uploaded documents will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Save Employee
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Salary Structure Modal -->
+        <div id="salary-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Salary Structure Configuration</h3>
+                    <button class="modal-close" onclick="closeSalaryModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="salary-form" class="modal-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="salary-employee">Employee</label>
+                            <select id="salary-employee" name="employeeId" required>
+                                <option value="">Select Employee</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="salary-effective-date">Effective Date</label>
+                            <input type="date" id="salary-effective-date" name="effectiveDate" required>
+                        </div>
+                    </div>
+
+                    <h4>Earnings</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="salary-ctc">Annual CTC (₹)</label>
+                            <input type="number" id="salary-ctc" name="ctc" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salary-basic">Basic Salary (Annual)</label>
+                            <input type="number" id="salary-basic" name="basicSalary" required>
+                        </div>
+                    </div>
+
+                    <div class="salary-calculator">
+                        <button type="button" class="btn-secondary" onclick="calculateSalaryBreakdown()">
+                            <i class="fas fa-calculator"></i> Auto Calculate
+                        </button>
+                        <div id="salary-breakdown" class="salary-breakdown">
+                            <!-- Calculated breakdown will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="closeSalaryModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Structure</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Payroll Cycle Modal -->
+        <div id="payroll-cycle-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Create Payroll Cycle</h3>
+                    <button class="modal-close" onclick="closePayrollCycleModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="payroll-cycle-form" class="modal-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="payroll-month">Month</label>
+                            <select id="payroll-month" name="payPeriod.month" required>
+                                <option value="">Select Month</option>
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="payroll-year">Year</label>
+                            <input type="number" id="payroll-year" name="payPeriod.year" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payroll-start-date">Start Date</label>
+                            <input type="date" id="payroll-start-date" name="payPeriod.startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payroll-end-date">End Date</label>
+                            <input type="date" id="payroll-end-date" name="payPeriod.endDate" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="closePayrollCycleModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Create Cycle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manual Attendance Entry Modal -->
+        <div id="manual-attendance-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="manual-attendance-title">Manual Attendance Entry</h3>
+                    <button class="modal-close" onclick="closeManualAttendanceModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="manual-attendance-form" class="modal-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="manual-employee">Employee *</label>
+                            <select id="manual-employee" name="employeeId" required>
+                                <option value="">Select Employee</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-date">Date *</label>
+                            <input type="date" id="manual-date" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-status">Status *</label>
+                            <select id="manual-status" name="status" required>
+                                <option value="">Select Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="half-day">Half Day</option>
+                                <option value="work-from-home">Work from Home</option>
+                                <option value="on-leave">On Leave</option>
+                                <option value="holiday">Holiday</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-checkin">Check In Time</label>
+                            <input type="datetime-local" id="manual-checkin" name="checkIn">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-checkout">Check Out Time</label>
+                            <input type="datetime-local" id="manual-checkout" name="checkOut">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-working-hours">Working Hours</label>
+                            <input type="number" id="manual-working-hours" name="workingHours" step="0.5" min="0" max="24">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="manual-reason">Reason</label>
+                            <textarea id="manual-reason" name="reason" rows="3" placeholder="Reason for manual entry..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="closeManualAttendanceModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Save Attendance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pay Calculator Modal -->
+        <div id="pay-calculator-modal" class="modal">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3>Pay Calculator</h3>
+                    <button class="modal-close" onclick="closePayCalculatorModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="pay-calc-employee">Employee</label>
+                            <select id="pay-calc-employee">
+                                <option value="">Select Employee</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pay-calc-start-date">Start Date</label>
+                            <input type="date" id="pay-calc-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="pay-calc-end-date">End Date</label>
+                            <input type="date" id="pay-calc-end-date">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" id="calculate-pay-btn" class="btn-primary">
+                                <i class="fas fa-calculator"></i> Calculate Pay
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="pay-calculation-result" class="pay-calculation-result" style="display: none;">
+                        <!-- Pay calculation results will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closePayCalculatorModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Report Modal -->
+        <div id="daily-report-modal" class="modal">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3>Daily Attendance Report</h3>
+                    <button class="modal-close" onclick="closeDailyReportModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="report-date">Date</label>
+                            <input type="date" id="report-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="report-department">Department</label>
+                            <select id="report-department">
+                                <option value="">All Departments</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="HR">HR</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button type="button" id="generate-report-btn" class="btn-primary">
+                                <i class="fas fa-chart-line"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="daily-report-result" class="daily-report-result" style="display: none;">
+                        <!-- Daily report results will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeDailyReportModal()">Close</button>
+                    <button type="button" id="export-report-btn" class="btn-primary" style="display: none;">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container">
+        <!-- Toast notifications will appear here -->
+    </div>
+
+    <!-- Payroll Management Modals -->
+    
+    <!-- Bulk Process Payroll Modal -->
+    <div id="bulk-process-modal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3>Bulk Process Payroll</h3>
+                <button class="modal-close" onclick="closeBulkProcessModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="bulk-process-form" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bulk-month">Month:</label>
+                        <select id="bulk-month" name="month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bulk-year">Year:</label>
+                        <select id="bulk-year" name="year" required>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="includeReimbursements" checked>
+                        Include Reimbursements
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Employees:</label>
+                    <div id="bulk-employees-list" class="employees-list">
+                        <!-- Employee checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeBulkProcessModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Process Payroll</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Compliance Reports Modal -->
+    <div id="compliance-reports-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Generate Compliance Reports</h3>
+                <button class="modal-close" onclick="closeComplianceReportsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="compliance-report-form" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="compliance-month">Month:</label>
+                        <select id="compliance-month" name="month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="compliance-year">Year:</label>
+                        <select id="compliance-year" name="year" required>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="compliance-type">Report Type:</label>
+                    <select id="compliance-type" name="type" required>
+                        <option value="">Select Report Type</option>
+                        <option value="pf">Provident Fund (PF) Challan</option>
+                        <option value="esi">Employee State Insurance (ESI) Challan</option>
+                        <option value="pt">Professional Tax (PT) Challan</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeComplianceReportsModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Generate Report</button>
+                </div>
+            </form>
+            
+            <div id="compliance-report-result" class="report-result" style="display: none;">
+                <!-- Report results will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Management Modal -->
+    <div id="tax-management-modal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3>Tax Management</h3>
+                <button class="modal-close" onclick="closeTaxManagementModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tax-financial-year">Financial Year:</label>
+                        <select id="tax-financial-year" onchange="loadTaxRecords()">
+                            <option value="2023">2023-24</option>
+                            <option value="2022">2022-23</option>
+                            <option value="2021">2021-22</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tax-employee">Employee:</label>
+                        <select id="tax-employee" onchange="loadTaxRecords()">
+                            <option value="">All Employees</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="tax-records-list" class="records-list">
+                    <!-- Tax records will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salary Disbursement Modal -->
+    <div id="salary-disbursement-modal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3>Salary Disbursement</h3>
+                <button class="modal-close" onclick="closeSalaryDisbursementModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="disbursement-employee">Employee:</label>
+                        <select id="disbursement-employee" onchange="loadDisbursementRecords()">
+                            <option value="">All Employees</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbursement-status">Status:</label>
+                        <select id="disbursement-status" onchange="loadDisbursementRecords()">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="success">Success</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbursement-month">Month:</label>
+                        <select id="disbursement-month" onchange="loadDisbursementRecords()">
+                            <option value="">All Months</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbursement-year">Year:</label>
+                        <select id="disbursement-year" onchange="loadDisbursementRecords()">
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="disbursement-records-list" class="records-list">
+                    <!-- Disbursement records will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

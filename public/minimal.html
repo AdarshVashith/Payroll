@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Pro - Minimal Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+        .dashboard {
+            text-align: center;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div id="login-container" class="container">
+        <h1 style="text-align: center; margin-bottom: 2rem; color: #333;">HR Pro Login</h1>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="admin@hrpro.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="admin123" required>
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+        
+        <div id="message" class="message hidden"></div>
+        
+        <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+            <strong>Test Credentials:</strong><br>
+            Admin: admin@hrpro.com / admin123<br>
+            HR: hr@hrpro.com / hrmanager123<br>
+            Employee: john.doe@hrpro.com / employee123
+        </div>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboard-container" class="container hidden">
+        <div class="dashboard">
+            <h1>HR Pro Dashboard</h1>
+            <p>Welcome, <span id="user-name">User</span>!</p>
+            
+            <div class="stats" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-employees">0</div>
+                    <div>Total Employees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="present-today">0</div>
+                    <div>Present Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-leaves">0</div>
+                    <div>Pending Leaves</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="monthly-payroll">$0</div>
+                    <div>Monthly Payroll</div>
+                </div>
+            </div>
+            
+            <button onclick="logout()" style="margin-top: 2rem; background: #dc3545;">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('Minimal HR Pro loaded');
+        
+        let currentUser = null;
+        
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showMessage('Logging in...', 'success');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    console.log('Login successful:', data);
+                    currentUser = data.user;
+                    localStorage.setItem('token', data.token);
+                    
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    showMessage('Login failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('Network error. Please try again.', 'error');
+            }
+        });
+        
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message ${type}`;
+            messageEl.classList.remove('hidden');
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageEl.classList.add('hidden');
+                }, 3000);
+            }
+        }
+        
+        function showDashboard() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('dashboard-container').classList.remove('hidden');
+            
+            if (currentUser) {
+                document.getElementById('user-name').textContent = currentUser.username;
+            }
+        }
+        
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    console.log('Dashboard stats:', stats);
+                    
+                    document.getElementById('total-employees').textContent = stats.employees.total;
+                    document.getElementById('present-today').textContent = stats.attendance.present;
+                    document.getElementById('pending-leaves').textContent = stats.leaves.pending;
+                    document.getElementById('monthly-payroll').textContent = '₹' + Math.round(stats.payroll.monthlyTotal).toLocaleString('en-IN');
+                } else {
+                    console.error('Failed to load dashboard data');
+                }
+            } catch (error) {
+                console.error('Dashboard loading error:', error);
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            currentUser = null;
+            document.getElementById('dashboard-container').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
+            showMessage('Logged out successfully', 'success');
+        }
+        
+        // Check if user is already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            // Verify token
+            fetch('/api/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.user) {
+                    currentUser = data.user;
+                    showDashboard();
+                    loadDashboardData();
+                }
+            })
+            .catch(error => {
+                console.log('Token verification failed:', error);
+                localStorage.clear();
+            });
+        }
+    </script>
+</body>
+</html>

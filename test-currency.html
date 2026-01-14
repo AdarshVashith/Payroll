@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Currency and Chart Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testCurrency() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Login first
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@hrpro.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginResponse.ok) {
+                    results.innerHTML += '<div class="test-result success">✓ Login successful</div>';
+                    
+                    // Get dashboard stats
+                    const statsResponse = await fetch('/api/dashboard/stats', {
+                        headers: { 'Authorization': `Bearer ${loginData.token}` }
+                    });
+                    
+                    const stats = await statsResponse.json();
+                    
+                    if (statsResponse.ok) {
+                        results.innerHTML += '<div class="test-result success">✓ Dashboard stats loaded</div>';
+                        results.innerHTML += `<div class="test-result info">Total Employees: ${stats.employees.total}</div>`;
+                        results.innerHTML += `<div class="test-result info">Present Today: ${stats.attendance.present}</div>`;
+                        results.innerHTML += `<div class="test-result info">Pending Leaves: ${stats.leaves.pending}</div>`;
+                        
+                        const rupeeAmount = '₹' + Math.round(stats.payroll.monthlyTotal).toLocaleString('en-IN');
+                        results.innerHTML += `<div class="test-result info">Monthly Payroll: ${rupeeAmount}</div>`;
+                        
+                        results.innerHTML += '<div class="test-result success">✓ Currency format: Indian Rupees (₹)</div>';
+                        
+                        if (stats.departments && stats.departments.length > 0) {
+                            results.innerHTML += '<div class="test-result success">✓ Department data available for chart</div>';
+                            results.innerHTML += `<div class="test-result info">Departments: ${stats.departments.map(d => d._id + ' (' + d.count + ')').join(', ')}</div>`;
+                        } else {
+                            results.innerHTML += '<div class="test-result error">✗ No department data for chart</div>';
+                        }
+                    } else {
+                        results.innerHTML += '<div class="test-result error">✗ Failed to load dashboard stats</div>';
+                    }
+                } else {
+                    results.innerHTML += '<div class="test-result error">✗ Login failed</div>';
+                }
+            } catch (error) {
+                results.innerHTML += `<div class="test-result error">✗ Error: ${error.message}</div>`;
+            }
+        }
+        
+        testCurrency();
+    </script>
+</body>
+</html>
