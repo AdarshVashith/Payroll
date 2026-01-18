@@ -5,6 +5,10 @@ let currentEmployees = [];
 let currentPageNum = 1;
 let totalPages = 1;
 
+// Chart instances for proper cleanup
+let departmentChartInstance = null;
+let employeeGrowthChartInstance = null;
+
 // API Base URL
 const API_BASE = '/api';
 
@@ -376,22 +380,33 @@ const loadDepartmentChart = (departments) => {
         return;
     }
 
+    // Destroy existing chart instance if it exists
+    if (departmentChartInstance) {
+        departmentChartInstance.destroy();
+        departmentChartInstance = null;
+    }
+
+    // Default data if no departments
+    const chartData = departments && departments.length > 0
+        ? departments
+        : [{ _id: 'No Data', count: 1 }];
+
     const ctx = chartElement.getContext('2d');
 
-    new Chart(ctx, {
+    departmentChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: departments.map(d => d._id),
+            labels: chartData.map(d => d._id || d.name || 'Unknown'),
             datasets: [{
-                data: departments.map(d => d.count),
+                data: chartData.map(d => d.count || 0),
                 backgroundColor: [
-                    '#3498db',
-                    '#2ecc71',
-                    '#f39c12',
-                    '#e74c3c',
-                    '#9b59b6',
-                    '#1abc9c',
-                    '#34495e'
+                    '#3b82f6',
+                    '#22c55e',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#8b5cf6',
+                    '#06b6d4',
+                    '#64748b'
                 ]
             }]
         },
@@ -400,7 +415,11 @@ const loadDepartmentChart = (departments) => {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
                 }
             }
         }
@@ -502,16 +521,26 @@ const displayEmployees = (employees) => {
 
 const loadDepartments = async () => {
     try {
-        const departments = await apiCall('/employees/departments/list');
+        const response = await apiCall('/employees/departments/list');
+        const departments = response.departments || [];
         const select = document.getElementById('department-filter');
         if (select) {
             select.innerHTML = '<option value="">All Departments</option>';
             departments.forEach(dept => {
-                select.innerHTML += `<option value="${dept}">${dept}</option>`;
+                const name = typeof dept === 'string' ? dept : dept.name;
+                select.innerHTML += `<option value="${name}">${name}</option>`;
             });
         }
     } catch (error) {
         console.error('Failed to load departments:', error);
+        // Use default departments if API fails
+        const select = document.getElementById('department-filter');
+        if (select) {
+            select.innerHTML = '<option value="">All Departments</option>';
+            ['Engineering', 'HR', 'Finance', 'Marketing', 'Sales'].forEach(dept => {
+                select.innerHTML += `<option value="${dept}">${dept}</option>`;
+            });
+        }
     }
 };
 

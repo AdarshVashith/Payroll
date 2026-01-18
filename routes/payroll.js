@@ -6,6 +6,48 @@ const moment = require('moment');
 
 const router = express.Router();
 
+// @route   GET /api/payroll/reports/summary
+// @desc    Get payroll summary statistics
+// @access  Private
+router.get('/reports/summary', auth, async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    const currentYear = year || new Date().getFullYear();
+    const currentMonth = month || new Date().getMonth() + 1;
+
+    // Get payroll records for the specified period
+    let query = supabase.from('payroll').select('*');
+
+    if (month) {
+      query = query.eq('month', currentMonth);
+    }
+    if (year) {
+      query = query.eq('year', currentYear);
+    }
+
+    const { data: payrolls, error } = await query;
+    if (error) throw error;
+
+    // Calculate summary
+    const totalPayrolls = payrolls?.length || 0;
+    const processedPayrolls = payrolls?.filter(p => p.status === 'processed' || p.status === 'paid').length || 0;
+    const pendingPayrolls = payrolls?.filter(p => p.status === 'pending' || p.status === 'draft').length || 0;
+    const totalAmount = payrolls?.reduce((sum, p) => sum + (parseFloat(p.net_pay) || 0), 0) || 0;
+
+    res.json({
+      totalPayrolls,
+      processedPayrolls,
+      pendingPayrolls,
+      totalAmount,
+      month: currentMonth,
+      year: currentYear
+    });
+  } catch (error) {
+    console.error('Get payroll summary error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET /api/payroll
 // @desc    Get payroll records
 // @access  Private

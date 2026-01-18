@@ -43,6 +43,34 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/employees/departments/list
+// @desc    Get list of departments
+// @access  Private
+router.get('/departments/list', auth, async (req, res) => {
+  try {
+    const { data: employees, error } = await supabase
+      .from('employees')
+      .select('department')
+      .not('department', 'is', null);
+
+    if (error) throw error;
+
+    // Get unique departments
+    const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
+
+    // Default departments if none exist
+    const defaultDepartments = ['Engineering', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'];
+    const allDepartments = departments.length > 0 ? departments : defaultDepartments;
+
+    res.json({
+      departments: allDepartments.map(name => ({ id: name.toLowerCase(), name }))
+    });
+  } catch (error) {
+    console.error('Get departments error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET /api/employees/:id
 // @desc    Get employee by ID
 // @access  Private
