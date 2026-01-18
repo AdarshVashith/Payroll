@@ -1,26 +1,32 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const supabase = require('../config/supabase');
 
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ message: 'No token provided, authorization denied' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
-    
-    if (!user) {
+
+    // Check Supabase for user
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, role, is_active')
+      .eq('id', decoded.userId)
+      .single();
+
+    if (!user || error) {
       return res.status(401).json({ message: 'User not found, authorization denied' });
     }
 
-    if (!user.isActive) {
+    if (!user.is_active) {
       return res.status(401).json({ message: 'Account is deactivated' });
     }
 
-    req.user = { id: user._id, userId: user._id, role: user.role };
+    req.user = { id: user.id, userId: user.id, role: user.role };
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -37,7 +43,7 @@ const authorize = (...roles) => {
 
     // Handle both array and individual arguments
     const allowedRoles = roles.flat();
-    
+
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
     }

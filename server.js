@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -8,25 +7,34 @@ require('dotenv').config();
 
 const app = express();
 
+// Request logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-      connectSrc: ["'self'"]
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://cdn.jsdelivr.net/npm/chart.js"],
+      imgSrc: ["'self'", "data:", "https:", "https://images.unsplash.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "https://uqmacqzsodbzzwrpcczw.supabase.co", "https://*.supabase.co"]
     }
-  }
+  },
+  crossOriginEmbedderPolicy: false
 }));
+
+// CORS configuration - more explicit for cross-origin requests
 app.use(cors());
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 500 // Increased limit for development/testing
 });
 app.use(limiter);
 
@@ -34,21 +42,30 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static('public'));
+// Serve static files (only when running locally, not in Netlify Functions)
+if (require.main === module) {
+  app.use(express.static('public'));
+}
 
-// Database connection
-const connectDB = async () => {
+// Health check route
+app.get('/api/health', async (req, res) => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hr_payroll');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error('Database connection error:', error);
-    process.exit(1);
+    const { data, error } = await require('./config/supabase').from('users').select('count', { count: 'exact', head: true });
+    if (error) throw error;
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      env: process.env.NODE_ENV
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed',
+      error: err.message
+    });
   }
-};
-
-connectDB();
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -65,24 +82,39 @@ app.use('/api/tax-management', require('./routes/taxManagement'));
 app.use('/api/salary-disbursement', require('./routes/salaryDisbursement'));
 app.use('/api/reimbursements', require('./routes/reimbursements'));
 
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Serve frontend (only when running locally, not in Netlify Functions)
+if (require.main === module) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'production' ? {} : err.stack
+  console.error('SERVER ERROR:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    query: req.query
+  });
+
+  res.status(500).json({
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'production' ? {} : err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// Start server if run directly
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Frontend available at http://localhost:${PORT}`);
+    console.log(`API available at http://localhost:${PORT}/api`);
+  });
+}
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Frontend available at http://localhost:${PORT}`);
-  console.log(`API available at http://localhost:${PORT}/api`);
-});
+module.exports = app;

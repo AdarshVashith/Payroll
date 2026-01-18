@@ -60,3 +60,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+uploads/
+
+# Local Netlify folder
+.netlify

@@ -25,9 +25,9 @@ const showToast = (message, type = 'info') => {
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
         <span>${message}</span>
     `;
-    
+
     toastContainer.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.remove();
     }, 5000);
@@ -57,31 +57,31 @@ const apiCall = async (endpoint, options = {}) => {
             ...(token && { 'Authorization': `Bearer ${token}` })
         }
     };
-    
+
     try {
         const response = await fetch(`${API_BASE}${endpoint}`, {
             ...defaultOptions,
             ...options,
             headers: { ...defaultOptions.headers, ...options.headers }
         });
-        
+
         if (!response.ok) {
             let errorData = null;
             try {
                 errorData = await response.json();
-            } catch (_) {}
+            } catch (_) { }
             const validationMsg = Array.isArray(errorData?.errors)
                 ? errorData.errors.map(e => e.msg).join(', ')
                 : null;
             const message = errorData?.message || validationMsg || `HTTP ${response.status}: ${response.statusText}`;
             throw new Error(message);
         }
-        
+
         return response.json();
     } catch (error) {
         // If it's a network error (Failed to fetch), provide a more helpful message
         if (error.message === 'Failed to fetch') {
-            throw new Error('Network error: Unable to connect to server. Please check if the server is running on http://localhost:3000');
+            throw new Error('Network error: Unable to connect to server. Please check your internet connection or if the server is running.');
         }
         throw error;
     }
@@ -94,7 +94,7 @@ const login = async (email, password) => {
             method: 'POST',
             body: JSON.stringify({ email, password })
         });
-        
+
         localStorage.setItem('token', response.token);
         currentUser = response.user;
         return response;
@@ -109,7 +109,7 @@ const register = async (userData) => {
             method: 'POST',
             body: JSON.stringify(userData)
         });
-        
+
         localStorage.setItem('token', response.token);
         currentUser = response.user;
         return response;
@@ -128,13 +128,13 @@ const checkAuth = async () => {
     console.log('Checking authentication...');
     const token = localStorage.getItem('token');
     console.log('Token found:', !!token);
-    
+
     if (!token) {
         console.log('No token, showing login screen');
         showLoginScreen();
         return false;
     }
-    
+
     try {
         console.log('Making API call to /auth/me');
         const response = await apiCall('/auth/me');
@@ -163,7 +163,7 @@ const showApp = () => {
     document.getElementById('app').style.display = 'flex';
     document.getElementById('user-name').textContent = currentUser.username;
     hideLoading();
-    
+
     // Wait a bit to ensure DOM is ready and authentication is complete
     setTimeout(() => {
         showPage('dashboard'); // This will load the dashboard properly
@@ -176,16 +176,16 @@ const showPage = (pageId) => {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
-    
+
     // Show selected page
     document.getElementById(`${pageId}-page`).classList.add('active');
-    
+
     // Update menu
     document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('active');
     });
     document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
-    
+
     // Update page title
     const titles = {
         dashboard: 'Dashboard',
@@ -197,9 +197,9 @@ const showPage = (pageId) => {
         performance: 'Performance Management'
     };
     document.getElementById('page-title').textContent = titles[pageId];
-    
+
     currentPage = pageId;
-    
+
     // Load page data
     switch (pageId) {
         case 'dashboard':
@@ -244,10 +244,10 @@ const showPage = (pageId) => {
         case 'payroll':
             loadPayroll();
             // Attach button event listener
-            const processPayrollBtn = document.getElementById('process-payroll-btn');
-            if (processPayrollBtn && !processPayrollBtn.hasAttribute('data-listener-attached')) {
-                processPayrollBtn.addEventListener('click', openProcessPayrollModal);
-                processPayrollBtn.setAttribute('data-listener-attached', 'true');
+            const bulkProcessBtn = document.getElementById('bulk-process-payroll-btn');
+            if (bulkProcessBtn && !bulkProcessBtn.hasAttribute('data-listener-attached')) {
+                bulkProcessBtn.addEventListener('click', openProcessPayrollModal);
+                bulkProcessBtn.setAttribute('data-listener-attached', 'true');
             }
             break;
         case 'expenses':
@@ -277,37 +277,37 @@ const loadDashboard = async () => {
     if (currentPage !== 'dashboard') {
         return;
     }
-    
+
     // Check if user is authenticated before making API calls
     if (!currentUser || !localStorage.getItem('token')) {
         console.log('User not authenticated, skipping dashboard load');
         return;
     }
-    
+
     try {
         const stats = await apiCall('/dashboard/stats');
-        
+
         // Update stats cards
         const totalEmployeesEl = document.getElementById('total-employees');
         const presentTodayEl = document.getElementById('present-today');
         const pendingLeavesEl = document.getElementById('pending-leaves');
         const monthlyPayrollEl = document.getElementById('monthly-payroll');
-        
-        if (totalEmployeesEl) totalEmployeesEl.textContent = stats.employees.total;
-        if (presentTodayEl) presentTodayEl.textContent = stats.attendance.present;
-        if (pendingLeavesEl) pendingLeavesEl.textContent = stats.leaves.pending;
-        if (monthlyPayrollEl) monthlyPayrollEl.textContent = formatCurrency(stats.payroll.monthlyTotal);
-        
+
+        if (totalEmployeesEl) totalEmployeesEl.textContent = stats.employees?.total || 0;
+        if (presentTodayEl) presentTodayEl.textContent = stats.attendance?.present || 0;
+        if (pendingLeavesEl) pendingLeavesEl.textContent = stats.leaves?.pending || 0;
+        if (monthlyPayrollEl) monthlyPayrollEl.textContent = formatCurrency(stats.payroll?.monthlyTotal || 0);
+
         // Load recent activities
         const activities = await apiCall('/dashboard/recent-activities?limit=10');
         displayRecentActivities(activities);
-        
+
         // Load department chart
         loadDepartmentChart(stats.departments);
-        
+
     } catch (error) {
         console.error('Dashboard loading error:', error);
-        
+
         // If it's an authentication error, redirect to login
         if (error.message.includes('authorization denied') || error.message.includes('Token is not valid')) {
             console.log('Authentication error, redirecting to login');
@@ -316,44 +316,44 @@ const loadDashboard = async () => {
             showLoginScreen();
             return;
         }
-        
+
         showToast(`Failed to load dashboard data: ${error.message}`, 'error');
     }
 };
 
 const displayRecentActivities = (activities) => {
     const container = document.getElementById('recent-activities');
-    
+
     if (!container) {
         console.warn('Recent activities container not found');
         return;
     }
-    
+
     container.innerHTML = '';
-    
+
     if (activities.length === 0) {
         container.innerHTML = '<p class="text-muted">No recent activities</p>';
         return;
     }
-    
+
     activities.forEach(activity => {
         const activityElement = document.createElement('div');
         activityElement.className = 'activity-item';
-        
+
         const iconClass = {
             employee_added: 'fa-user-plus',
             leave_request: 'fa-calendar-times',
             expense_claim: 'fa-receipt',
             payroll_processed: 'fa-money-bill-wave'
         }[activity.type] || 'fa-info-circle';
-        
+
         const iconColor = {
             employee_added: '#3498db',
             leave_request: '#f39c12',
             expense_claim: '#e74c3c',
             payroll_processed: '#2ecc71'
         }[activity.type] || '#6c757d';
-        
+
         activityElement.innerHTML = `
             <div class="activity-icon" style="background: ${iconColor}">
                 <i class="fas ${iconClass}"></i>
@@ -363,21 +363,21 @@ const displayRecentActivities = (activities) => {
                 <div class="activity-time">${formatDateTime(activity.date)}</div>
             </div>
         `;
-        
+
         container.appendChild(activityElement);
     });
 };
 
 const loadDepartmentChart = (departments) => {
     const chartElement = document.getElementById('department-chart');
-    
+
     if (!chartElement) {
         console.warn('Department chart element not found');
         return;
     }
-    
+
     const ctx = chartElement.getContext('2d');
-    
+
     new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -412,8 +412,8 @@ const loadEmployees = async (page = 1) => {
     try {
         const searchTerm = document.getElementById('employee-search')?.value || '';
         const department = document.getElementById('department-filter')?.value || '';
-        const status = document.getElementById('status-filter')?.value || '';
-        
+        const status = document.getElementById('status-filter')?.value || 'active';
+
         const queryParams = new URLSearchParams({
             page,
             limit: 10,
@@ -421,18 +421,18 @@ const loadEmployees = async (page = 1) => {
             ...(department && { department }),
             ...(status && { status })
         });
-        
+
         const response = await apiCall(`/employees?${queryParams}`);
         currentEmployees = response.employees;
         currentPageNum = response.currentPage;
         totalPages = response.totalPages;
-        
+
         displayEmployees(response.employees);
         updatePagination();
-        
+
         // Load departments for filter
         loadDepartments();
-        
+
     } catch (error) {
         showToast('Failed to load employees', 'error');
     }
@@ -440,33 +440,63 @@ const loadEmployees = async (page = 1) => {
 
 const displayEmployees = (employees) => {
     const tbody = document.querySelector('#employees-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (employees.length === 0) {
+
+    if (!employees || employees.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No employees found</td></tr>';
         return;
     }
-    
+
     employees.forEach(employee => {
+        if (!employee) return;
+        const firstName = employee.personalInfo?.firstName || 'Unknown';
+        const lastName = employee.personalInfo?.lastName || 'Name';
+        const department = employee.employment?.department || 'N/A';
+        const position = employee.employment?.position || employee.employment?.designation || 'N/A';
+        const status = employee.employment?.status || 'active';
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${employee.employeeId}</td>
-            <td>${employee.personalInfo.firstName} ${employee.personalInfo.lastName}</td>
-            <td>${employee.employment.department}</td>
-            <td>${employee.employment.position}</td>
-            <td><span class="status-badge status-${employee.employment.status}">${employee.employment.status}</span></td>
+            <td>${employee.employeeId || 'N/A'}</td>
+            <td>${firstName} ${lastName}</td>
+            <td>${department}</td>
+            <td>${position}</td>
+            <td><span class="status-badge status-${status}">${status}</span></td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-sm btn-edit" onclick="editEmployee('${employee._id}')">
+                    <button class="btn-sm btn-edit js-edit-employee" data-id="${employee._id}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-sm btn-delete" onclick="deleteEmployee('${employee._id}')">
+                    <button class="btn-sm btn-delete js-delete-employee" data-id="${employee._id}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
+    });
+
+    // Attach event listeners for CSP compliance
+    const editBtns = document.querySelectorAll('.js-edit-employee');
+    const deleteBtns = document.querySelectorAll('.js-delete-employee');
+
+    console.log(`Attaching listeners to ${editBtns.length} edit buttons and ${deleteBtns.length} delete buttons`);
+
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            console.log('Edit button clicked for ID:', btn.dataset.id);
+            e.preventDefault(); // Prevent default button behavior just in case
+            editEmployee(btn.dataset.id);
+        });
+    });
+
+    deleteBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            console.log('Delete button clicked for ID:', btn.dataset.id);
+            e.preventDefault();
+            deleteEmployee(btn.dataset.id);
+        });
     });
 };
 
@@ -489,7 +519,7 @@ const updatePagination = () => {
     const pageInfo = document.getElementById('page-info');
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
-    
+
     if (pageInfo) pageInfo.textContent = `Page ${currentPageNum} of ${totalPages}`;
     if (prevBtn) prevBtn.disabled = currentPageNum <= 1;
     if (nextBtn) nextBtn.disabled = currentPageNum >= totalPages;
@@ -500,7 +530,7 @@ const loadAttendance = async () => {
     try {
         const response = await apiCall('/attendance');
         displayAttendance(response.attendanceRecords);
-        
+
         // Load today's status if user is an employee
         if (currentUser.employee) {
             loadTodayAttendance();
@@ -512,22 +542,36 @@ const loadAttendance = async () => {
 
 const displayAttendance = (records) => {
     const tbody = document.querySelector('#attendance-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No attendance records found</td></tr>';
+
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No attendance records found</td></tr>';
         return;
     }
-    
+
     records.forEach(record => {
+        if (!record) return;
+        const employee = record.employeeId;
+        const empName = employee ? `${employee.personalInfo?.firstName || 'Unknown'} ${employee.personalInfo?.lastName || ''}` : 'Deleted Employee';
+
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td>${empName}</td>
             <td>${formatDate(record.date)}</td>
-            <td>${record.employeeId.personalInfo.firstName} ${record.employeeId.personalInfo.lastName}</td>
-            <td>${record.checkIn.time ? formatDateTime(record.checkIn.time) : '-'}</td>
-            <td>${record.checkOut.time ? formatDateTime(record.checkOut.time) : '-'}</td>
-            <td>${record.totalHours ? record.totalHours.toFixed(2) : '0.00'} hrs</td>
             <td><span class="status-badge status-${record.status}">${record.status}</span></td>
+            <td>${record.checkIn?.time ? formatTime(record.checkIn.time) : '-'}</td>
+            <td>${record.checkOut?.time ? formatTime(record.checkOut.time) : '-'}</td>
+            <td>${record.totalHours ? record.totalHours.toFixed(2) : '0.00'}</td>
+            <td>${record.overtimeHours ? record.overtimeHours.toFixed(2) : '0.00'}</td>
+            <td>${record.isLate ? 'Yes' : 'No'}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-sm btn-info" onclick="viewAttendanceDetails('${record._id}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(row);
     });
@@ -545,7 +589,7 @@ const loadTodayAttendance = async () => {
 const displayTodayStatus = (attendance) => {
     const statusContainer = document.getElementById('today-status');
     if (!statusContainer) return;
-    
+
     if (!attendance) {
         statusContainer.innerHTML = `
             <div class="status-item">
@@ -555,10 +599,10 @@ const displayTodayStatus = (attendance) => {
         `;
         return;
     }
-    
-    const checkedIn = attendance.checkIn.time;
-    const checkedOut = attendance.checkOut.time;
-    
+
+    const checkedIn = attendance.checkIn?.time;
+    const checkedOut = attendance.checkOut?.time;
+
     statusContainer.innerHTML = `
         <div class="status-item">
             <h5>${checkedIn ? 'Checked In' : 'Not Checked In'}</h5>
@@ -580,7 +624,7 @@ const checkIn = async () => {
         showToast('Only employees can check in', 'error');
         return;
     }
-    
+
     try {
         await apiCall('/attendance/checkin', {
             method: 'POST',
@@ -588,7 +632,7 @@ const checkIn = async () => {
                 employeeId: currentUser.employee.id
             })
         });
-        
+
         showToast('Checked in successfully', 'success');
         loadTodayAttendance();
         loadAttendance();
@@ -602,7 +646,7 @@ const checkOut = async () => {
         showToast('Only employees can check out', 'error');
         return;
     }
-    
+
     try {
         await apiCall('/attendance/checkout', {
             method: 'POST',
@@ -610,12 +654,109 @@ const checkOut = async () => {
                 employeeId: currentUser.employee.id
             })
         });
-        
+
         showToast('Checked out successfully', 'success');
         loadTodayAttendance();
         loadAttendance();
     } catch (error) {
         showToast(error.message, 'error');
+    }
+};
+
+const openManualAttendanceModal = async () => {
+    try {
+        const response = await apiCall('/employees?limit=1000');
+        const employees = response.employees;
+
+        const employeeOptions = employees.map(emp =>
+            `<option value="${emp._id}">${emp.personalInfo.firstName} ${emp.personalInfo.lastName} (${emp.employeeId})</option>`
+        ).join('');
+
+        const today = new Date().toISOString().split('T')[0];
+
+        const content = `
+            <form id="manual-attendance-form">
+                <div class="form-group">
+                    <label for="att-employeeId">Employee *</label>
+                    <select id="att-employeeId" name="employeeId" required>
+                        <option value="">Select Employee</option>
+                        ${employeeOptions}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="att-date">Date *</label>
+                        <input type="date" id="att-date" name="date" required value="${today}">
+                    </div>
+                    <div class="form-group">
+                        <label for="att-status">Status *</label>
+                        <select id="att-status" name="status" required>
+                            <option value="present" selected>Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="half-day">Half Day</option>
+                            <option value="work-from-home">Work From Home</option>
+                            <option value="on-leave">On Leave</option>
+                            <option value="holiday">Holiday</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="att-checkIn">Check In Time</label>
+                        <input type="datetime-local" id="att-checkIn" name="checkIn">
+                    </div>
+                    <div class="form-group">
+                        <label for="att-checkOut">Check Out Time</label>
+                        <input type="datetime-local" id="att-checkOut" name="checkOut">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="att-reason">Reason/Note</label>
+                    <textarea id="att-reason" name="reason" rows="2" placeholder="Manual entry reason..."></textarea>
+                </div>
+            </form>
+        `;
+
+        showModal('Manual Attendance Entry', content, handleManualAttendanceSave);
+    } catch (error) {
+        showToast('Failed to load employee list', 'error');
+    }
+};
+
+const handleManualAttendanceSave = async () => {
+    const form = document.getElementById('manual-attendance-form');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+    const data = {
+        employeeId: formData.get('employeeId'),
+        date: formData.get('date'),
+        status: formData.get('status'),
+        checkIn: formData.get('checkIn') || undefined,
+        checkOut: formData.get('checkOut') || undefined,
+        reason: formData.get('reason')
+    };
+
+    try {
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) saveBtn.disabled = true;
+
+        await apiCall('/attendance/manual-entry', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+
+        showToast('Attendance recorded successfully', 'success');
+        hideModal();
+        loadAttendance();
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) saveBtn.disabled = false;
     }
 };
 
@@ -631,25 +772,32 @@ const loadLeaves = async () => {
 
 const displayLeaves = (leaves) => {
     const tbody = document.querySelector('#leaves-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (leaves.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No leave requests found</td></tr>';
+
+    if (!leaves || leaves.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No leave requests found</td></tr>';
         return;
     }
-    
+
     leaves.forEach(leave => {
+        if (!leave) return;
+        const employee = leave.employeeId;
+        const empName = employee ? `${employee.personalInfo?.firstName || 'Unknown'} ${employee.personalInfo?.lastName || ''}` : 'Deleted Employee';
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${leave.employeeId.personalInfo.firstName} ${leave.employeeId.personalInfo.lastName}</td>
+            <td>${leave.leaveId || 'N/A'}</td>
+            <td>${empName}</td>
             <td>${leave.leaveType}</td>
             <td>${formatDate(leave.startDate)}</td>
             <td>${formatDate(leave.endDate)}</td>
             <td>${leave.totalDays}</td>
             <td><span class="status-badge status-${leave.status}">${leave.status}</span></td>
+            <td>${formatDate(leave.appliedDate)}</td>
             <td>
                 <div class="action-buttons">
-                    ${leave.status === 'pending' ? `
+                    ${leave.status === 'pending' || leave.status === 'submitted' ? `
                         <button class="btn-sm btn-approve" onclick="approveLeave('${leave._id}')">
                             <i class="fas fa-check"></i>
                         </button>
@@ -657,6 +805,9 @@ const displayLeaves = (leaves) => {
                             <i class="fas fa-times"></i>
                         </button>
                     ` : ''}
+                    <button class="btn-sm btn-info" onclick="viewLeaveDetails('${leave._id}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
             </td>
         `;
@@ -665,50 +816,288 @@ const displayLeaves = (leaves) => {
 };
 
 // Payroll functions
-const loadPayroll = async () => {
+const loadPayroll = async (page = 1) => {
     try {
-        const response = await apiCall('/payroll');
+        const employeeId = document.getElementById('payroll-employee')?.value || '';
+        const department = document.getElementById('payroll-department')?.value || '';
+        const status = document.getElementById('payroll-status-filter')?.value || '';
+        const month = document.getElementById('payroll-month')?.value || '';
+        const year = document.getElementById('payroll-year')?.value || new Date().getFullYear();
+
+        const queryParams = new URLSearchParams({
+            page,
+            limit: 10,
+            employeeId,
+            department,
+            status,
+            month,
+            year
+        });
+
+        const response = await apiCall(`/payroll?${queryParams.toString()}`);
         displayPayroll(response.payrolls);
+        updatePayrollSummary();
     } catch (error) {
         showToast('Failed to load payroll data', 'error');
+    }
+};
+
+const updatePayrollSummary = async () => {
+    try {
+        const month = document.getElementById('payroll-month')?.value || '';
+        const year = document.getElementById('payroll-year')?.value || new Date().getFullYear();
+
+        const response = await apiCall(`/payroll/reports/summary?month=${month}&year=${year}`);
+        const summary = response.summary || {};
+
+        document.getElementById('total-payrolls').textContent = summary.totalEmployees || 0;
+        document.getElementById('processed-payrolls').textContent = summary.paidCount || 0;
+        document.getElementById('pending-payrolls').textContent = summary.pendingCount || 0;
+        document.getElementById('total-payroll-amount').textContent = formatCurrency(summary.totalNetPay || 0);
+    } catch (error) {
+        console.error('Failed to update payroll summary:', error);
     }
 };
 
 const displayPayroll = (payrolls) => {
     const tbody = document.querySelector('#payroll-table tbody');
     tbody.innerHTML = '';
-    
-    if (payrolls.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No payroll records found</td></tr>';
+
+    if (!payrolls || payrolls.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">No payroll records found</td></tr>';
         return;
     }
-    
+
     payrolls.forEach(payroll => {
+        if (!payroll) return;
         const row = document.createElement('tr');
+        // Handle both aggregated (flat) and nested formats if necessary
+        const emp = payroll.employee || payroll.employeeId;
+        if (!emp) return;
+        const name = emp.personalInfo ? `${emp.personalInfo.firstName} ${emp.personalInfo.lastName}` : 'N/A';
+        const dept = emp.employment ? emp.employment.department : 'N/A';
+
         row.innerHTML = `
-            <td>${payroll.employeeId.personalInfo.firstName} ${payroll.employeeId.personalInfo.lastName}</td>
-            <td>${formatDate(payroll.payPeriod.startDate)} - ${formatDate(payroll.payPeriod.endDate)}</td>
-            <td>${formatCurrency(payroll.earnings.totalEarnings)}</td>
-            <td>${formatCurrency(payroll.deductions.totalDeductions)}</td>
+            <td>${payroll.payrollId}</td>
+            <td>${name}</td>
+            <td>${dept}</td>
+            <td>${payroll.payPeriod?.month || 'N/A'}/${payroll.payPeriod?.year || ''}</td>
+            <td>${payroll.payPeriod?.actualWorkingDays || 0}/${payroll.payPeriod?.workingDays || 0}</td>
+            <td>${formatCurrency(payroll.grossPay)}</td>
+            <td>${formatCurrency(payroll.totalDeductions)}</td>
             <td>${formatCurrency(payroll.netPay)}</td>
             <td><span class="status-badge status-${payroll.status}">${payroll.status}</span></td>
             <td>
                 <div class="action-buttons">
-                    ${payroll.status === 'draft' ? `
-                        <button class="btn-sm btn-approve" onclick="processPayroll('${payroll._id}')">
-                            Process
+                    ${payroll.status === 'draft' || payroll.status === 'calculated' ? `
+                        <button class="btn-sm btn-approve" title="Approve" onclick="approvePayroll('${payroll._id}')">
+                            <i class="fas fa-check"></i>
                         </button>
                     ` : ''}
-                    ${payroll.status === 'processed' ? `
-                        <button class="btn-sm btn-approve" onclick="payPayroll('${payroll._id}')">
-                            Pay
+                    ${payroll.status === 'approved' ? `
+                        <button class="btn-sm btn-edit" title="Process for Payment" onclick="initiateDisbursement('${payroll._id}')">
+                            <i class="fas fa-credit-card"></i>
                         </button>
                     ` : ''}
+                    <button class="btn-sm btn-view" title="Download Payslip" onclick="downloadPayslip('${payroll._id}')">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="btn-sm btn-edit" title="Email Payslip" onclick="emailPayslip('${payroll._id}')">
+                        <i class="fas fa-envelope"></i>
+                    </button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
     });
+};
+
+const approvePayroll = async (id) => {
+    if (!confirm('Approve this payroll record?')) return;
+    try {
+        await apiCall(`/payroll/${id}/approve`, {
+            method: 'PUT',
+            body: JSON.stringify({ comments: 'Approved via web dashboard' })
+        });
+        showToast('Payroll approved successfully', 'success');
+        loadPayroll();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const downloadPayslip = async (id) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/payroll/${id}/payslip`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to download payslip');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `payslip-${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const emailPayslip = async (id) => {
+    try {
+        await apiCall(`/payroll/${id}/email-payslip`, { method: 'POST' });
+        showToast('Payslip sent via email', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const initiateDisbursement = async (id) => {
+    if (!confirm('Mark this payroll as ready for disbursement?')) return;
+    try {
+        await apiCall('/payroll/disburse-bulk', {
+            method: 'POST',
+            body: JSON.stringify({
+                payrollIds: [id],
+                paymentMethod: 'bank-transfer'
+            })
+        });
+        showToast('Disbursement initiated', 'success');
+        loadPayroll();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const showComplianceReports = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const content = `
+        <div class="compliance-form">
+            <div class="form-row mb-3">
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="comp-month" class="w-full">
+                        <option value="1" ${currentMonth === 1 ? 'selected' : ''}>January</option>
+                        <option value="2" ${currentMonth === 2 ? 'selected' : ''}>February</option>
+                        <option value="3" ${currentMonth === 3 ? 'selected' : ''}>March</option>
+                        <option value="4" ${currentMonth === 4 ? 'selected' : ''}>April</option>
+                        <option value="5" ${currentMonth === 5 ? 'selected' : ''}>May</option>
+                        <option value="6" ${currentMonth === 6 ? 'selected' : ''}>June</option>
+                        <option value="7" ${currentMonth === 7 ? 'selected' : ''}>July</option>
+                        <option value="8" ${currentMonth === 8 ? 'selected' : ''}>August</option>
+                        <option value="9" ${currentMonth === 9 ? 'selected' : ''}>September</option>
+                        <option value="10" ${currentMonth === 10 ? 'selected' : ''}>October</option>
+                        <option value="11" ${currentMonth === 11 ? 'selected' : ''}>November</option>
+                        <option value="12" ${currentMonth === 12 ? 'selected' : ''}>December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <select id="comp-year" class="w-full">
+                        <option value="2026" ${currentYear === 2026 ? 'selected' : ''}>2026</option>
+                        <option value="2025" ${currentYear === 2025 ? 'selected' : ''}>2025</option>
+                        <option value="2024" ${currentYear === 2024 ? 'selected' : ''}>2024</option>
+                    </select>
+                </div>
+            </div>
+            <div class="compliance-options">
+                <button class="btn-secondary w-full mb-2" onclick="generateChallan('pf')">Generate PF Challan</button>
+                <button class="btn-secondary w-full mb-2" onclick="generateChallan('esi')">Generate ESI Challan</button>
+                <button class="btn-secondary w-full" onclick="generateChallan('pt')">Generate PT Challan</button>
+            </div>
+        </div>
+    `;
+    showModal('Compliance Reports', content);
+};
+
+window.generateChallan = async (type) => {
+    const month = document.getElementById('comp-month').value;
+    const year = document.getElementById('comp-year').value;
+    if (!month || !year) {
+        showToast('Please select month and year', 'error');
+        return;
+    }
+    try {
+        const response = await apiCall(`/payroll/compliance/challans?type=${type}&month=${month}&year=${year}`);
+        const content = `<div class="challan-data"><pre class="bg-light p-3 border rounded" style="max-height: 400px; overflow: auto;">${JSON.stringify(response, null, 2)}</pre></div>`;
+        showModal(`${type.toUpperCase()} Challan Data`, content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const showTaxManagement = async () => {
+    try {
+        const response = await apiCall('/tax-management');
+        const content = `
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Year</th>
+                            <th>Regime</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${response.taxRecords.map(record => `
+                            <tr>
+                                <td>${record.employeeId.personalInfo.firstName}</td>
+                                <td>${record.financialYear.startYear}</td>
+                                <td>${record.taxRegime}</td>
+                                <td>${record.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        showModal('Tax Declarations', content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+const showSalaryDisbursement = async () => {
+    try {
+        const response = await apiCall('/salary-disbursement');
+        const content = `
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Batch ID</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${response.disbursements.map(d => `
+                            <tr>
+                                <td>${d.batchId}</td>
+                                <td>${formatCurrency(d.paymentDetails.netAmount)}</td>
+                                <td>${d.paymentDetails.paymentMethod}</td>
+                                <td>${d.transaction.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        showModal('Recent Disbursements', content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
 };
 
 // Expense functions
@@ -723,17 +1112,22 @@ const loadExpenses = async () => {
 
 const displayExpenses = (expenses) => {
     const tbody = document.querySelector('#expenses-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (expenses.length === 0) {
+
+    if (!expenses || expenses.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No expense claims found</td></tr>';
         return;
     }
-    
+
     expenses.forEach(expense => {
+        if (!expense) return;
+        const employee = expense.employeeId;
+        const empName = employee ? `${employee.personalInfo?.firstName || 'Unknown'} ${employee.personalInfo?.lastName || ''}` : 'Deleted Employee';
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${expense.employeeId.personalInfo.firstName} ${expense.employeeId.personalInfo.lastName}</td>
+            <td>${empName}</td>
             <td>${expense.expenseType}</td>
             <td>${formatCurrency(expense.amount)}</td>
             <td>${formatDate(expense.expenseDate)}</td>
@@ -767,21 +1161,26 @@ const loadPerformance = async () => {
 
 const displayPerformance = (reviews) => {
     const tbody = document.querySelector('#performance-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (reviews.length === 0) {
+
+    if (!reviews || reviews.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No performance reviews found</td></tr>';
         return;
     }
-    
+
     reviews.forEach(review => {
+        if (!review) return;
+        const employee = review.employeeId;
+        const empName = employee ? `${employee.personalInfo?.firstName || 'Unknown'} ${employee.personalInfo?.lastName || ''}` : 'Deleted Employee';
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${review.employeeId.personalInfo.firstName} ${review.employeeId.personalInfo.lastName}</td>
+            <td>${empName}</td>
             <td>${review.reviewType}</td>
             <td>${formatDate(review.reviewPeriod.startDate)} - ${formatDate(review.reviewPeriod.endDate)}</td>
             <td><span class="status-badge status-${review.status}">${review.status}</span></td>
-            <td>${review.overallRatings.finalRating || '-'}</td>
+            <td>${review.overallRatings?.finalRating || '-'}</td>
             <td>
                 <div class="action-buttons">
                     <button class="btn-sm btn-edit" onclick="editReview('${review._id}')">
@@ -795,20 +1194,22 @@ const displayPerformance = (reviews) => {
 };
 
 // Modal functions
+// Modal functions
 const showModal = (title, content, onSave = null) => {
     const modalContainer = document.getElementById('modal-container');
-    
+
     if (!modalContainer) {
         console.error('Modal container not found');
         showToast('Error: Modal container not found', 'error');
         return;
     }
+
     modalContainer.innerHTML = `
         <div class="modal active">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>${title}</h3>
-                    <button class="modal-close" onclick="hideModal()">
+                    <button class="modal-close" id="modal-close-btn">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -816,42 +1217,41 @@ const showModal = (title, content, onSave = null) => {
                     ${content}
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-secondary" onclick="hideModal()">Cancel</button>
-                    ${onSave ? '<button class="btn-primary" onclick="handleModalSave()">Save</button>' : ''}
+                    <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                    ${onSave ? '<button class="btn-primary" id="modal-save-btn">Save</button>' : ''}
                 </div>
             </div>
         </div>
     `;
     modalContainer.style.display = 'flex';
-    
-    // Store the save callback
+
+    // Attach event listeners
+    document.getElementById('modal-close-btn').addEventListener('click', hideModal);
+    document.getElementById('modal-cancel-btn').addEventListener('click', hideModal);
+
     if (onSave) {
-        window.currentModalSave = onSave;
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', onSave);
+        }
     }
 };
 
 const hideModal = () => {
-    document.getElementById('modal-container').style.display = 'none';
-    window.currentModalSave = null;
-};
-
-const handleModalSave = () => {
-    if (window.currentModalSave) {
-        window.currentModalSave();
+    const modalContainer = document.getElementById('modal-container');
+    if (modalContainer) {
+        modalContainer.style.display = 'none';
+        modalContainer.innerHTML = ''; // Clean up
     }
 };
 
 // Employee CRUD operations
-const addEmployee = () => {
-    console.log('addEmployee invoked');
-    // Check if user has permission to add employees
-    if (!currentUser || !['admin', 'hr'].includes(currentUser.role)) {
-        showToast('You do not have permission to add employees', 'error');
-        return;
-    }
-    
+// Shared variable to track edit mode
+let currentEditingId = null;
+
+const openEmployeeModal = (mode = 'create') => {
     const content = `
-        <form id="employee-form">
+        <form id="add-employee-form">
             <div class="form-section">
                 <h4>Basic Details</h4>
                 <div class="form-row">
@@ -860,8 +1260,8 @@ const addEmployee = () => {
                         <input type="text" id="employeeId" name="employeeId" required>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" id="email" name="email" required>
+                        <label for="emp-email">Email *</label>
+                        <input type="email" id="emp-email" name="email" required>
                     </div>
                 </div>
                 
@@ -1017,11 +1417,121 @@ const addEmployee = () => {
             </div>
         </form>
     `;
-    
-    showModal('Add New Employee', content, async () => {
-        const form = document.getElementById('employee-form');
+
+    const title = mode === 'edit' ? 'Edit Employee' : 'Add New Employee';
+    showModal(title, content, handleEmployeeSave);
+
+    // Update button text if needed (showModal defaults to Save)
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) {
+        saveBtn.textContent = mode === 'edit' ? 'Update' : 'Save';
+    }
+};
+
+const addEmployee = () => {
+    // Check if user has permission to add employees
+    if (!currentUser || !['admin', 'hr'].includes(currentUser.role)) {
+        showToast('You do not have permission to add employees', 'error');
+        return;
+    }
+    currentEditingId = null; // Reset editing ID for new employee
+    openEmployeeModal('create');
+};
+
+const editEmployee = async (id) => {
+    try {
+        currentEditingId = id;
+        const employee = await apiCall(`/employees/${id}`);
+
+        openEmployeeModal('edit'); // Open modal with edit title and save button text
+
+        // Populate form fields after the modal content is rendered by openEmployeeModal
+        document.getElementById('employeeId').value = employee.employeeId || '';
+        document.getElementById('emp-email').value = employee.personalInfo.email || '';
+        document.getElementById('firstName').value = employee.personalInfo.firstName || '';
+        document.getElementById('lastName').value = employee.personalInfo.lastName || '';
+        document.getElementById('phone').value = employee.personalInfo.phone || '';
+        document.getElementById('dateOfBirth').value = employee.personalInfo.dateOfBirth ? new Date(employee.personalInfo.dateOfBirth).toISOString().split('T')[0] : '';
+        document.getElementById('gender').value = employee.personalInfo.gender || '';
+        document.getElementById('maritalStatus').value = employee.personalInfo.maritalStatus || '';
+        document.getElementById('panNumber').value = employee.personalInfo.panNumber || '';
+        document.getElementById('aadhaarNumber').value = employee.personalInfo.aadhaarNumber || '';
+
+        // Handle department: check if exists in options, if not add it
+        const departmentSelect = document.getElementById('department');
+        const empDept = employee.employment.department;
+        if (empDept) {
+            let optionExists = false;
+            for (let i = 0; i < departmentSelect.options.length; i++) {
+                if (departmentSelect.options[i].value === empDept) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            if (!optionExists) {
+                const newOption = document.createElement('option');
+                newOption.value = empDept;
+                newOption.textContent = empDept;
+                departmentSelect.appendChild(newOption);
+            }
+            departmentSelect.value = empDept;
+        }
+
+        document.getElementById('designation').value = employee.employment.designation || '';
+        document.getElementById('role').value = employee.employment.role || '';
+        document.getElementById('dateOfJoining').value = employee.employment.dateOfJoining ? new Date(employee.employment.dateOfJoining).toISOString().split('T')[0] : '';
+        document.getElementById('employmentType').value = employee.employment.employmentType || 'full-time';
+        document.getElementById('employmentStatus').value = employee.employment.status || 'active';
+
+        document.getElementById('ctc').value = employee.salaryStructure?.ctc || '';
+        document.getElementById('basicSalary').value = employee.salaryStructure?.basicSalary || '';
+
+        document.getElementById('accountNumber').value = employee.bankDetails?.accountNumber || '';
+        document.getElementById('ifscCode').value = employee.bankDetails?.ifscCode || '';
+        document.getElementById('bankName').value = employee.bankDetails?.bankName || '';
+        document.getElementById('accountHolderName').value = employee.bankDetails?.accountHolderName || '';
+
+    } catch (error) {
+        console.error('Error fetching employee:', error);
+        showToast('Failed to load employee details', 'error');
+    }
+};
+
+const deleteEmployee = async (id) => {
+    if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        await apiCall(`/employees/${id}`, { method: 'DELETE' });
+        showToast('Employee deleted successfully', 'success');
+
+        // Immediate UI update
+        const row = document.querySelector(`button[data-id="${id}"]`).closest('tr');
+        if (row) row.remove();
+
+        loadEmployees(); // Reload properly in background
+    } catch (error) {
+        showToast(error.message || 'Failed to delete employee', 'error');
+    }
+};
+
+const handleEmployeeSave = async () => {
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+        const form = document.getElementById('add-employee-form');
+
+        // Form validation
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            if (saveBtn) saveBtn.disabled = false;
+            return;
+        }
+
         const formData = new FormData(form);
-        
+
         const employeeData = {
             employeeId: formData.get('employeeId'),
             personalInfo: {
@@ -1036,7 +1546,8 @@ const addEmployee = () => {
                 aadhaarNumber: formData.get('aadhaarNumber') || undefined
             },
             employment: {
-                department: formData.get('department'),
+                department: document.getElementById('department').value ||
+                    (currentEditingId ? currentEmployees.find(e => e._id === currentEditingId)?.employment?.department : ''),
                 designation: formData.get('designation'),
                 role: formData.get('role'),
                 employmentType: formData.get('employmentType') || 'full-time',
@@ -1058,177 +1569,29 @@ const addEmployee = () => {
                 accountHolderName: formData.get('accountHolderName')
             }
         };
-        
-        try {
-            const response = await apiCall('/employees', {
-                method: 'POST',
-                body: JSON.stringify(employeeData)
-            });
-            
-            showToast('Employee added successfully', 'success');
-            hideModal();
-            loadEmployees();
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
-    });
-};
 
-const editEmployee = async (id) => {
-    try {
-        const employee = await apiCall(`/employees/${id}`);
-        
-        const content = `
-            <form id="employee-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="employeeId">Employee ID *</label>
-                        <input type="text" id="employeeId" name="employeeId" value="${employee.employeeId}" required readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" value="${employee.userId?.email || ''}" readonly>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="firstName">First Name *</label>
-                        <input type="text" id="firstName" name="firstName" value="${employee.personalInfo.firstName}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lastName">Last Name *</label>
-                        <input type="text" id="lastName" name="lastName" value="${employee.personalInfo.lastName}" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="department">Department *</label>
-                        <select id="department" name="department" required>
-                            <option value="">Select Department</option>
-                            <option value="Engineering" ${employee.employment.department === 'Engineering' ? 'selected' : ''}>Engineering</option>
-                            <option value="Marketing" ${employee.employment.department === 'Marketing' ? 'selected' : ''}>Marketing</option>
-                            <option value="Sales" ${employee.employment.department === 'Sales' ? 'selected' : ''}>Sales</option>
-                            <option value="Human Resources" ${employee.employment.department === 'Human Resources' ? 'selected' : ''}>Human Resources</option>
-                            <option value="Finance" ${employee.employment.department === 'Finance' ? 'selected' : ''}>Finance</option>
-                            <option value="Operations" ${employee.employment.department === 'Operations' ? 'selected' : ''}>Operations</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="designation">Designation *</label>
-                        <input type="text" id="designation" name="designation" value="${employee.employment.designation || ''}" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="dateOfJoining">Date of Joining *</label>
-                        <input type="date" id="dateOfJoining" name="dateOfJoining" value="${employee.employment.dateOfJoining ? new Date(employee.employment.dateOfJoining).toISOString().split('T')[0] : ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="basicSalary">Basic Salary *</label>
-                        <input type="number" id="basicSalary" name="basicSalary" value="${employee.salaryStructure?.basicSalary || ''}" required>
-                    </div>
-                </div>
+        const method = currentEditingId ? 'PUT' : 'POST';
+        const url = currentEditingId ? `/employees/${currentEditingId}` : '/employees';
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="role">Role *</label>
-                        <input type="text" id="role" name="role" value="${employee.employment.role || ''}" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="phone">Phone</label>
-                        <input type="tel" id="phone" name="phone" value="${employee.personalInfo.phone || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label for="dateOfBirth">Date of Birth</label>
-                        <input type="date" id="dateOfBirth" name="dateOfBirth" value="${employee.personalInfo.dateOfBirth ? new Date(employee.personalInfo.dateOfBirth).toISOString().split('T')[0] : ''}">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="gender">Gender</label>
-                        <select id="gender" name="gender">
-                            <option value="">Select Gender</option>
-                            <option value="male" ${employee.personalInfo.gender === 'male' ? 'selected' : ''}>Male</option>
-                            <option value="female" ${employee.personalInfo.gender === 'female' ? 'selected' : ''}>Female</option>
-                            <option value="other" ${employee.personalInfo.gender === 'other' ? 'selected' : ''}>Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="status">Status</label>
-                        <select id="status" name="status">
-                            <option value="active" ${employee.employment.status === 'active' ? 'selected' : ''}>Active</option>
-                            <option value="on-notice" ${employee.employment.status === 'on-notice' ? 'selected' : ''}>On Notice</option>
-                            <option value="inactive" ${employee.employment.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                            <option value="exited" ${employee.employment.status === 'exited' ? 'selected' : ''}>Exited</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-        `;
-        
-        showModal('Edit Employee', content, async () => {
-            const form = document.getElementById('employee-form');
-            const formData = new FormData(form);
-            
-            const updateData = {
-                personalInfo: {
-                    firstName: formData.get('firstName'),
-                    lastName: formData.get('lastName'),
-                    dateOfBirth: formData.get('dateOfBirth') || undefined,
-                    gender: formData.get('gender') || undefined,
-                    phone: formData.get('phone') || undefined
-                },
-                employment: {
-                    department: formData.get('department'),
-                    designation: formData.get('designation'),
-                    role: formData.get('role'),
-                    dateOfJoining: formData.get('dateOfJoining'),
-                    status: formData.get('status')
-                },
-                salaryStructure: {
-                    basicSalary: parseFloat(formData.get('basicSalary'))
-                }
-            };
-            
-            try {
-                await apiCall(`/employees/${id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(updateData)
-                });
-                
-                showToast('Employee updated successfully', 'success');
-                hideModal();
-                loadEmployees();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
+        console.log('Spending employee data:', JSON.stringify(employeeData, null, 2));
+
+        await apiCall(url, {
+            method: method,
+            body: JSON.stringify(employeeData)
         });
+
+        showToast(currentEditingId ? 'Employee updated successfully' : 'Employee added successfully', 'success');
+        hideModal();
+        loadEmployees();
     } catch (error) {
-        showToast('Failed to load employee data', 'error');
+        console.error('Save error:', error);
+        showToast(error.message || 'Failed to save employee', 'error');
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
     }
 };
 
-const deleteEmployee = async (id) => {
-    if (confirm('Are you sure you want to terminate this employee?')) {
-        try {
-            await apiCall(`/employees/${id}`, {
-                method: 'DELETE'
-            });
-            
-            showToast('Employee terminated successfully', 'success');
-            loadEmployees();
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
-    }
-};
+
 
 const approveLeave = async (id) => {
     try {
@@ -1243,7 +1606,7 @@ const approveLeave = async (id) => {
 const rejectLeave = async (id) => {
     const reason = prompt('Please provide a reason for rejection:');
     if (!reason) return;
-    
+
     try {
         await apiCall(`/leaves/${id}/reject`, {
             method: 'PUT',
@@ -1289,7 +1652,7 @@ const approveExpense = async (id) => {
 const rejectExpense = async (id) => {
     const reason = prompt('Please provide a reason for rejection:');
     if (!reason) return;
-    
+
     try {
         await apiCall(`/expenses/${id}/reject`, {
             method: 'PUT',
@@ -1388,20 +1751,20 @@ const applyLeave = () => {
             }
         </script>
     `;
-    
+
     showModal('Apply for Leave', content, async () => {
         const form = document.getElementById('leave-form');
         const formData = new FormData(form);
-        
+
         if (!currentUser.employee) {
             showToast('Only employees can apply for leave', 'error');
             return;
         }
-        
+
         const isHalfDay = formData.get('isHalfDay') === 'on';
         const startDate = formData.get('startDate');
         const endDate = isHalfDay ? startDate : formData.get('endDate');
-        
+
         const leaveData = {
             employeeId: currentUser.employee.id,
             leaveType: formData.get('leaveType'),
@@ -1416,13 +1779,13 @@ const applyLeave = () => {
                 relationship: formData.get('emergencyContactRelation') || undefined
             }
         };
-        
+
         try {
             await apiCall('/leaves', {
                 method: 'POST',
                 body: JSON.stringify(leaveData)
             });
-            
+
             showToast('Leave application submitted successfully', 'success');
             hideModal();
             loadLeaves();
@@ -1436,35 +1799,40 @@ const applyLeave = () => {
 // Simple initialization without complex auth flow
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded - simple initialization');
-    
-    // Force hide loading screen after 2 seconds
-    setTimeout(() => {
-        console.log('Hiding loading screen');
+
+    // Check for existing session
+    const init = async () => {
+        const isAuthenticated = await checkAuth();
         const loadingScreen = document.getElementById('loading-screen');
         const loginScreen = document.getElementById('login-screen');
-        
+
         if (loadingScreen) {
             loadingScreen.style.display = 'none';
         }
-        
-        if (loginScreen) {
-            loginScreen.style.display = 'flex';
-            console.log('Login screen should be visible now');
-        } else {
-            console.error('Login screen element not found');
-        }
-    }, 2000);
-    
-    // Clear any existing tokens
-    localStorage.clear();
-    console.log('Cleared localStorage');
 
-    
+        if (isAuthenticated) {
+            showApp();
+        } else {
+            if (loginScreen) {
+                loginScreen.style.display = 'flex';
+                console.log('Login screen visible');
+            }
+        }
+    };
+
+    // Initialize after a short delay to ensure DOM is ready
+    setTimeout(init, 1000);
+
+    // Clear any existing tokens - REMOVE FOR PRODUCTION/PERSISTENCE
+    // localStorage.clear();
+    // console.log('Cleared localStorage');
+
+
     // Login form
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        
+
         try {
             await login(formData.get('email'), formData.get('password'));
             showToast('Login successful', 'success');
@@ -1473,12 +1841,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(error.message, 'error');
         }
     });
-    
+
     // Register form
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        
+
         try {
             await register({
                 username: formData.get('username'),
@@ -1492,20 +1860,20 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(error.message, 'error');
         }
     });
-    
+
     // Toggle between login and register
     document.getElementById('register-link').addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';
     });
-    
+
     document.getElementById('login-link').addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('login-form').style.display = 'block';
         document.getElementById('register-form').style.display = 'none';
     });
-    
+
     // Sidebar navigation
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -1514,41 +1882,45 @@ document.addEventListener('DOMContentLoaded', () => {
             showPage(page);
         });
     });
-    
+
     // Logout
     document.getElementById('logout-btn').addEventListener('click', logout);
-    
+
     // Sidebar toggle for mobile
     document.querySelector('.sidebar-toggle').addEventListener('click', () => {
         document.querySelector('.sidebar').classList.toggle('open');
     });
-    
+
     // Button event listeners
     // Employee search and filters
     document.getElementById('employee-search')?.addEventListener('input', () => {
         loadEmployees(1);
     });
-    
+
     document.getElementById('department-filter')?.addEventListener('change', () => {
         loadEmployees(1);
     });
-    
+
     document.getElementById('status-filter')?.addEventListener('change', () => {
         loadEmployees(1);
     });
-    
-    // Pagination
-    document.getElementById('prev-page')?.addEventListener('click', () => {
-        if (currentPageNum > 1) {
-            loadEmployees(currentPageNum - 1);
-        }
+
+    // Manual Attendance
+    document.getElementById('manual-attendance-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openManualAttendanceModal();
     });
-    
-    document.getElementById('next-page')?.addEventListener('click', () => {
-        if (currentPageNum < totalPages) {
-            loadEmployees(currentPageNum + 1);
-        }
-    });
+
+    document.getElementById('payroll-employee')?.addEventListener('change', () => loadPayroll());
+    document.getElementById('payroll-department')?.addEventListener('change', () => loadPayroll());
+    document.getElementById('payroll-status-filter')?.addEventListener('change', () => loadPayroll());
+    document.getElementById('payroll-month')?.addEventListener('change', () => loadPayroll());
+    document.getElementById('payroll-year')?.addEventListener('change', () => loadPayroll());
+
+    document.getElementById('compliance-reports-btn')?.addEventListener('click', showComplianceReports);
+    document.getElementById('tax-management-btn')?.addEventListener('click', showTaxManagement);
+    document.getElementById('salary-disbursement-btn')?.addEventListener('click', showSalaryDisbursement);
+    document.getElementById('bulk-process-payroll-btn')?.addEventListener('click', openProcessPayrollModal);
 
     // Ensure Add Employee button works even if handler didn't attach on page switch
     const addEmployeeBtnGlobal = document.getElementById('add-employee-btn');
@@ -1627,16 +1999,16 @@ const submitExpense = () => {
             </div>
         </form>
     `;
-    
+
     showModal('Submit Expense Claim', content, async () => {
         const form = document.getElementById('expense-form');
         const formData = new FormData(form);
-        
+
         if (!currentUser.employee) {
             showToast('Only employees can submit expense claims', 'error');
             return;
         }
-        
+
         const expenseData = {
             employeeId: currentUser.employee.id,
             expenseType: formData.get('expenseType'),
@@ -1649,13 +2021,13 @@ const submitExpense = () => {
             reimbursementMethod: formData.get('reimbursementMethod'),
             notes: formData.get('notes') || undefined
         };
-        
+
         try {
             await apiCall('/expenses', {
                 method: 'POST',
                 body: JSON.stringify(expenseData)
             });
-            
+
             showToast('Expense claim submitted successfully', 'success');
             hideModal();
             loadExpenses();
@@ -1666,119 +2038,97 @@ const submitExpense = () => {
 };
 
 // Payroll Management CRUD operations
-const openProcessPayrollModal = () => {
-    const content = `
-        <form id="payroll-form">
-            <div class="form-group">
-                <label for="employeeSelect">Select Employee *</label>
-                <select id="employeeSelect" name="employeeId" required>
-                    <option value="">Select Employee</option>
-                </select>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="startDate">Pay Period Start *</label>
-                    <input type="date" id="startDate" name="startDate" required>
+const openProcessPayrollModal = async () => {
+    try {
+        const response = await apiCall('/employees?limit=1000&status=active');
+        const employees = response.employees;
+
+        const employeeOptions = employees.map(emp =>
+            `<option value="${emp._id}">${emp.personalInfo.firstName} ${emp.personalInfo.lastName} (${emp.employeeId})</option>`
+        ).join('');
+
+        const content = `
+            <form id="payroll-process-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="proc-month">Month *</label>
+                        <select id="proc-month" name="month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="proc-year">Year *</label>
+                        <select id="proc-year" name="year" required>
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="endDate">Pay Period End *</label>
-                    <input type="date" id="endDate" name="endDate" required>
+                    <label for="proc-employeeId">Employee (Optional - leave empty for all)</label>
+                    <select id="proc-employeeId" name="employeeId">
+                        <option value="">All Employees</option>
+                        ${employeeOptions}
+                    </select>
                 </div>
-            </div>
-            
-            <h4>Earnings</h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="baseSalary">Base Salary *</label>
-                    <input type="number" id="baseSalary" name="baseSalary" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="overtime">Overtime</label>
-                    <input type="number" id="overtime" name="overtime" step="0.01" value="0">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="bonus">Bonus</label>
-                    <input type="number" id="bonus" name="bonus" step="0.01" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="allowances">Allowances</label>
-                    <input type="number" id="allowances" name="allowances" step="0.01" value="0">
-                </div>
-            </div>
-            
-            <h4>Additional Information</h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="regularHours">Regular Hours</label>
-                    <input type="number" id="regularHours" name="regularHours" step="0.1" value="160">
-                </div>
-                <div class="form-group">
-                    <label for="overtimeHours">Overtime Hours</label>
-                    <input type="number" id="overtimeHours" name="overtimeHours" step="0.1" value="0">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="notes">Notes</label>
-                <textarea id="notes" name="notes" rows="2" placeholder="Any additional notes..."></textarea>
-            </div>
-        </form>
-    `;
-    
-    showModal('Process Payroll', content, async () => {
-        // Load employees for selection
-        try {
-            const response = await apiCall('/employees?limit=100');
-            const employeeSelect = document.getElementById('employeeSelect');
-            response.employees.forEach(emp => {
-                const option = document.createElement('option');
-                option.value = emp._id;
-                option.textContent = `${emp.employeeId} - ${emp.personalInfo.firstName} ${emp.personalInfo.lastName}`;
-                employeeSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Failed to load employees:', error);
-        }
-    }, async () => {
-        const form = document.getElementById('payroll-form');
-        const formData = new FormData(form);
-        
-        const payrollData = {
-            employeeId: formData.get('employeeId'),
-            payPeriod: {
-                startDate: formData.get('startDate'),
-                endDate: formData.get('endDate')
-            },
-            earnings: {
-                baseSalary: parseFloat(formData.get('baseSalary')),
-                overtime: parseFloat(formData.get('overtime')) || 0,
-                bonus: parseFloat(formData.get('bonus')) || 0,
-                allowances: parseFloat(formData.get('allowances')) || 0
-            },
-            hoursWorked: {
-                regularHours: parseFloat(formData.get('regularHours')) || 0,
-                overtimeHours: parseFloat(formData.get('overtimeHours')) || 0
-            },
-            notes: formData.get('notes') || undefined
-        };
-        
-        try {
-            await apiCall('/payroll', {
-                method: 'POST',
-                body: JSON.stringify(payrollData)
-            });
-            
-            showToast('Payroll processed successfully', 'success');
-            hideModal();
-            loadPayroll();
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
-    });
+            </form>
+        `;
+
+        showModal('Process Payroll', content, handlePayrollProcess);
+
+        // Default to current month/year
+        const now = new Date();
+        document.getElementById('proc-month').value = now.getMonth() + 1;
+        document.getElementById('proc-year').value = now.getFullYear();
+    } catch (error) {
+        showToast('Failed to load employee list', 'error');
+    }
+};
+
+const handlePayrollProcess = async () => {
+    const form = document.getElementById('payroll-process-form');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+    const data = {
+        month: parseInt(formData.get('month')),
+        year: parseInt(formData.get('year')),
+        employeeIds: formData.get('employeeId') ? [formData.get('employeeId')] : []
+    };
+
+    try {
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) saveBtn.disabled = true;
+
+        const response = await apiCall('/payroll/process-bulk', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+
+        showToast(response.message || 'Payroll processing started', 'success');
+        hideModal();
+        loadPayroll();
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) saveBtn.disabled = false;
+    }
 };
 
 // Performance Management CRUD operations
@@ -1914,7 +2264,7 @@ const createReview = () => {
             }
         </script>
     `;
-    
+
     showModal('Create Performance Review', content, async () => {
         // Load employees for selection
         try {
@@ -1932,12 +2282,12 @@ const createReview = () => {
     }, async () => {
         const form = document.getElementById('review-form');
         const formData = new FormData(form);
-        
+
         // Process goals
         const goalTitles = formData.getAll('goalTitle[]');
         const goalKras = formData.getAll('goalKra[]');
         const goalDescriptions = formData.getAll('goalDescription[]');
-        
+
         const goals = goalTitles.map((title, index) => ({
             title: title,
             kra: goalKras[index] || '',
@@ -1945,16 +2295,16 @@ const createReview = () => {
             status: 'not-started',
             progress: 0
         })).filter(goal => goal.title.trim() !== '');
-        
+
         // Process competencies
         const competencyNames = formData.getAll('competencyName[]');
         const competencySelfRatings = formData.getAll('competencySelfRating[]');
-        
+
         const competencies = competencyNames.map((name, index) => ({
             name: name,
             selfRating: parseInt(competencySelfRatings[index]) || 1
         })).filter(comp => comp.name.trim() !== '');
-        
+
         const reviewData = {
             employeeId: formData.get('employeeId'),
             reviewType: formData.get('reviewType'),
@@ -1967,13 +2317,13 @@ const createReview = () => {
             competencies: competencies,
             managerComments: formData.get('managerComments') || undefined
         };
-        
+
         try {
             await apiCall('/performance/reviews', {
                 method: 'POST',
                 body: JSON.stringify(reviewData)
             });
-            
+
             showToast('Performance review created successfully', 'success');
             hideModal();
             loadPerformance();
@@ -2032,12 +2382,12 @@ const startAutoRefresh = () => {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
     }
-    
+
     autoRefreshInterval = setInterval(() => {
         // Only refresh dashboard if user is on dashboard page and no modal is open
         const modalContainer = document.getElementById('modal-container');
         const isModalOpen = modalContainer && modalContainer.style.display === 'flex';
-        
+
         if (currentPage === 'dashboard' && !isModalOpen) {
             loadDashboard();
         }
@@ -2054,7 +2404,7 @@ const stopAutoRefresh = () => {
 // Enhanced error handling
 const handleApiError = (error, context = '') => {
     console.error(`API Error ${context}:`, error);
-    
+
     if (error.message.includes('401') || error.message.includes('unauthorized')) {
         showToast('Session expired. Please login again.', 'error');
         setTimeout(() => {
@@ -2108,12 +2458,12 @@ document.addEventListener('keydown', (e) => {
             searchInput.focus();
         }
     }
-    
+
     // Escape to close modal
     if (e.key === 'Escape') {
         hideModal();
     }
-    
+
     // Ctrl/Cmd + N for new item (context dependent)
     if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
@@ -2185,9 +2535,9 @@ const confirmAction = (message, onConfirm) => {
             </div>
         </div>
     `;
-    
+
     showModal('Confirm Action', content);
-    
+
     window.confirmAndClose = () => {
         hideModal();
         onConfirm();
@@ -2212,22 +2562,22 @@ const validateEmployeeForm = (formData) => {
         validateRequired(formData.get('designation'), 'Designation');
         validateRequired(formData.get('dateOfJoining'), 'Date of Joining');
         validateRequired(formData.get('basicSalary'), 'Basic Salary');
-        
+
         const email = formData.get('email');
         if (email && !validateEmail(email)) {
             throw new Error('Please enter a valid email address');
         }
-        
+
         const phone = formData.get('phone');
         if (phone && !validatePhone(phone)) {
             throw new Error('Please enter a valid phone number');
         }
-        
+
         const salary = parseFloat(formData.get('basicSalary'));
         if (salary <= 0 || Number.isNaN(salary)) {
             throw new Error('Basic salary must be greater than 0');
         }
-        
+
         return true;
     } catch (error) {
         showToast(error.message, 'error');
@@ -2272,7 +2622,7 @@ const getSuccessMessage = (action, type) => {
             review: 'Performance review rejected. Please revise.'
         }
     };
-    
+
     return messages[action]?.[type] || `${action} completed successfully!`;
 };
 
@@ -2289,7 +2639,7 @@ const initializeHelpSystem = () => {
         'expenseType': 'Category that best describes this expense',
         'businessPurpose': 'Explain how this expense benefits the business'
     };
-    
+
     Object.entries(helpTexts).forEach(([fieldId, helpText]) => {
         const field = document.getElementById(fieldId);
         if (field) {
