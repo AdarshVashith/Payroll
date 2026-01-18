@@ -1,9 +1,21 @@
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+
+// In Netlify Functions, env vars are already available via process.env
+// dotenv is only needed for local development
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 
 const app = express();
+
+// Check for required environment variables
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+    console.error('Missing required environment variables:', missingEnvVars);
+}
 
 // CORS configuration
 app.use(cors());
@@ -21,20 +33,34 @@ app.use((req, res, next) => {
 // Health check route
 app.get('/api/health', async (req, res) => {
     try {
+        const envStatus = {
+            SUPABASE_URL: !!process.env.SUPABASE_URL,
+            SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+            JWT_SECRET: !!process.env.JWT_SECRET,
+            JWT_EXPIRE: !!process.env.JWT_EXPIRE
+        };
+
         const supabase = require('../../config/supabase');
         const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
         if (error) throw error;
+
         res.json({
             status: 'ok',
             database: 'connected',
             timestamp: new Date().toISOString(),
-            env: process.env.NODE_ENV || 'production'
+            env: process.env.NODE_ENV || 'production',
+            envVarsConfigured: envStatus
         });
     } catch (err) {
         res.status(500).json({
             status: 'error',
             message: 'Database connection failed',
-            error: err.message
+            error: err.message,
+            envVarsConfigured: {
+                SUPABASE_URL: !!process.env.SUPABASE_URL,
+                SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+                JWT_SECRET: !!process.env.JWT_SECRET
+            }
         });
     }
 });
